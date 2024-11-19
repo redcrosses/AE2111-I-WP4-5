@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sp
 from scipy.integrate import quad
+from centroid import centroid_of_quadrilateral
 
 
 #Constraints
@@ -33,17 +34,22 @@ box.draw()
 
 
 
-def MOI_x(wingbox: list[tuple], stringer_area: float, y: float, thickness: float, chord) -> float:
-    centroid_x: float = find.centroid()
+def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
+    centroid: float = tuple(centroid_of_quadrilateral(wingbox))
+    beta: float = np.arctan((wingbox[1][1]-wingbox[0][1])/box.length)
+    theta: float = np.arctan((wingbox[3][1]-wingbox[4][1])/box.length)
+    a = box.length/np.cos(beta)
+    b = box.length/np.cos(theta)
 
+    I_xx_1 = thickness * (a**3)*(np.sin(beta)**2) * (1/12) + (thickness*a) * ((a/2)*np.sin(beta)+(wingbox[0][1]-centroid[1]))**2
+    I_xx_2 = (box.frontsparheight * thickness**3)*(1/12) + (thickness*box.frontsparheight) * (((wingbox[0][1]+wingbox[4][1])/2)-centroid[1])**2
+    I_xx_3 = thickness * (b**3)*(np.sin(theta)**2) * (1/12) + (thickness*b) * ((b/2)*np.sin(theta)+(wingbox[3][1]-centroid[1]))**2
+    I_xx_4 = (box.rearsparheight * thickness**3)*(1/12) + (thickness*box.rearsparheight) * (((wingbox[2][1]+wingbox[3][1])/2)-centroid[1])**2
 
+    I_stringers = sum([stringer_area*pos[1]**2 for pos in stringer_positions])
+    return I_xx_1 + I_xx_2 + I_xx_3 + I_xx_4 + I_stringers
 
-
-
-
-
-    return
-def G(y: float) -> float:
+def J(y: float) -> float:
     return
 
 def bending_displacement(MOI: float, loads: list) -> list[float]:

@@ -31,6 +31,21 @@ class WingBox():
 box = WingBox(2,3,1)
 box.draw()
 
+
+
+def MOI_x(wingbox: list[tuple], stringer_area: float, y: float, thickness: float, chord) -> float:
+    centroid_x: float = find.centroid()
+
+
+
+
+
+
+
+    return
+def G(y: float) -> float:
+    return
+
 def bending_displacement(MOI: float, loads: list) -> list[float]:
     return
 

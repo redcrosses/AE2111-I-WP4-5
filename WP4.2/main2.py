@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scipy as sp
 from scipy.integrate import quad
 from centroid import centroid_of_quadrilateral
-
+import points_intersection
 
 #Constraints
 #- The wing tip displacement should not exceed 15% of the total span of the wing.
@@ -25,6 +25,7 @@ class WingBox():
         
         #wingbox
         self.sparpos = points_intersection.run([self.frontsparpos, self.rearsparpos])
+        self.sparpos.append(self.sparpos[0])
         # print(self.sparpos)
         self.x2,self.y2 = zip(*self.sparpos)
         
@@ -41,8 +42,6 @@ class WingBox():
 
 box = WingBox(0.1,0.5) #box from 10%c to 50%c
 box.draw()
-
-
 
 def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))

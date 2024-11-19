@@ -10,10 +10,9 @@ import points_intersection
 #- The wing tip rotation should not exceed +/- 10°.
 
 class WingBox():
-    def __init__(self, frontsparpos, rearsparpos):
-        self.frontsparpos: float = frontsparpos
-        self.rearsparpos: float = rearsparpos
-        self.length: float = self.rearsparpos - self.frontsparpos
+    def __init__(self, frontsparlength, rearsparlength):
+        self.frontsparlength: float = frontsparlength
+        self.rearsparlength: float = rearsparlength
         
     def draw(self):
         #airfoil
@@ -24,7 +23,7 @@ class WingBox():
         self.y1 = data[:,1]
         
         #wingbox
-        self.sparpos = points_intersection.run([self.frontsparpos, self.rearsparpos])
+        self.sparpos = points_intersection.run([self.frontsparlength, self.rearsparlength])
         self.sparpos.append(self.sparpos[0])
         # print(self.sparpos)
         self.x2,self.y2 = zip(*self.sparpos)

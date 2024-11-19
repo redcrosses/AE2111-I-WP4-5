@@ -39,7 +39,7 @@ class WingBox():
 #draw/have the geomerty of a wing box
 #calculate the centroid, second moment of area
 
-box = WingBox(0.1,0.5) #box from 10%c to 50%c
+box = WingBox(0.25,0.1) #box from 10%c to 50%c
 box.draw()
 
 def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:

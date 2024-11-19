@@ -46,7 +46,7 @@ def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[t
     I_xx_3 = thickness * (b**3)*(np.sin(theta)**2) * (1/12) + (thickness*b) * ((b/2)*np.sin(theta)+(wingbox[3][1]-centroid[1]))**2
     I_xx_4 = (box.rearsparheight * thickness**3)*(1/12) + (thickness*box.rearsparheight) * (((wingbox[2][1]+wingbox[3][1])/2)-centroid[1])**2
 
-    I_stringers = sum([stringer_area*pos[1]**2 for pos in stringer_positions])
+    I_stringers = sum([stringer_area*(pos[1]-centroid[1])**2 for pos in stringer_positions])
     return I_xx_1 + I_xx_2 + I_xx_3 + I_xx_4 + I_stringers
 
 def J(y: float) -> float:

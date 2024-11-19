@@ -55,16 +55,20 @@ def torsion_rotation(G: float, loads: list) -> list[float]:
 
 #compute deflection profiles of the wing (app.D.2)
 
-def Mx(y):
+def Mx(y): 
+    #WP4.1
     return y
 
-def EI_xx(y):
+def EI_xx(y): 
+    #shiyu function * E
     return y
 
-def T(y):
+def T(y): 
+    #WP4.1
     return y
 
-def GJ(y):
+def GJ(y): 
+    #shiyu function * G
     return y
 
 def dv_dy(y):

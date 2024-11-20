@@ -13,20 +13,20 @@ class WingBox():
     def __init__(self, frontsparlength, rearsparlength):
         self.frontsparlength: float = frontsparlength
         self.rearsparlength: float = rearsparlength
-        
+        self.trapezoid = points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
+        self.width: float = self.trapezoid[2,0] - self.trapezoid[1,0] #width between the front and rear spar
+
     def draw(self):
+        #wingbox
+        self.wingboxtodisp = self.trapezoid
+        self.wingboxtodisp = np.append(self.trapezoid, [self.trapezoid[0]], axis=0)
+        self.x2,self.y2 = zip(*self.wingboxtodisp)
         #airfoil
         self.x1 = np.array([0])
         self.y1 = np.array([0])
         data = np.loadtxt("WP4.2/fx60126.dat")
         self.x1 = data[:,0]
         self.y1 = data[:,1]
-        
-        #wingbox
-        self.sparpos = points_intersection.run([self.frontsparlength, self.rearsparlength])
-        self.sparpos.append(self.sparpos[0])
-        # print(self.sparpos)
-        self.x2,self.y2 = zip(*self.sparpos)
         
         plt.plot(self.x1,self.y1)
         plt.plot(self.x2,self.y2)
@@ -36,11 +36,15 @@ class WingBox():
         pass
     def secondmomentarea(self):
         pass
-#draw/have the geomerty of a wing box
-#calculate the centroid, second moment of area
-
-box = WingBox(0.25,0.1) #box from 10%c to 50%c
+#draw/have the geomerty of a wing box 
+box = WingBox(0.11,0.09) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
 box.draw()
+#box.trapezoid provides the trapezoid points, 
+#box.frontsparlength provides the front spar length
+#box.rearsparlength provides the rear spar length
+#box.length provides the length between the spars
+
+#calculate the centroid, second moment of area
 
 def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))

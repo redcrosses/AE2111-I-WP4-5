@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.integrate import quad
+
 from scipy.integrate import simpson
 
 # Constants
@@ -36,7 +38,7 @@ def read_avl_data(avl_file):
     return data[int(len(data)/2)::]
 
 # Process AVL data
-avl_file = "WP4.1/AVL.txt"
+avl_file = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/AVL.txt"
 avl_data = read_avl_data(avl_file)
 print(avl_data)
 # Extract spanwise position (y), chord (c), Cl, and Cd
@@ -63,44 +65,74 @@ load_factor_negative = -1.5
 distributed_load_positive = N_dist * load_factor_positive
 distributed_load_negative = N_dist * load_factor_negative
 
-# Shear Force Calculation using Simpson's rule
-def shear_force(x_eval, distributed_load, point_load_position, point_load):
-    """Compute the shear force using Simpson's rule."""
-    # Evaluate up to the current x position
-    load_values = np.interp(spanwise_positions, spanwise_positions, distributed_load)
-    idx_eval = spanwise_positions <= x_eval
-    S_eval = -simpson(y=load_values[idx_eval], x=spanwise_positions[idx_eval])
+
+def interpolate_distributed_load(x, spanwise_positions, distributed_load):
+
+    return np.interp(x, spanwise_positions, distributed_load)
+
+
+def compute_shear_force(x_eval, spanwise_positions, distributed_load, point_load_position, point_load, wing_span):
+
+    # Integration function for the distributed load
+    def distributed_load_function(x):
+        return interpolate_distributed_load(x, spanwise_positions, distributed_load)
+
+    # Integrate the distributed load from x_eval to the end of the wing span
+    integral_w, _ = quad(distributed_load_function, x_eval, wing_span)
+
+    # Include the contribution of the point load using a Heaviside step function
+    S_eval = -integral_w
     if x_eval <= point_load_position:
         S_eval -= point_load
+
     return S_eval
 
+# Compute shear force distributions for positive and negative load factors
 shear_force_positive = np.array(
-    [shear_force(x, distributed_load_positive, engine_position, engine_weight) for x in spanwise_positions])
+    [compute_shear_force(x, spanwise_positions, distributed_load_positive, engine_position, engine_weight, wing_span)
+     for x in spanwise_positions]
+)
 shear_force_negative = np.array(
-    [shear_force(x, distributed_load_negative, engine_position, engine_weight) for x in spanwise_positions])
+    [compute_shear_force(x, spanwise_positions, distributed_load_negative, engine_position, engine_weight, wing_span)
+     for x in spanwise_positions]
+)
 
-# Bending Moment Calculation using Simpson's rule
-def bending_moment(x_eval, shear_force_values):
-    """Compute the bending moment using Simpson's rule."""
-    idx_eval = spanwise_positions <= x_eval
-    M_eval = -simpson(y=shear_force_values[idx_eval], x=spanwise_positions[idx_eval])
-    return M_eval
+# Corrected Bending Moment Calculation using Simpson's rule
+def bending_moment(x_eval, spanwise_positions, shear_force_function):
+    # Integration function for the shear force
+    def shear_integral(x):
+        return shear_force_function(x)
 
-bending_moment_positive = np.array([bending_moment(x, shear_force_positive) for x in spanwise_positions])
-bending_moment_negative = np.array([bending_moment(x, shear_force_negative) for x in spanwise_positions])
+    # Integrate the shear force from x_eval to the end of the beam
+    wing_span = spanwise_positions[-1]  # Assume the last position is the end of the beam
+    M_eval, _ = quad(shear_integral, x_eval, wing_span)
 
-# Torque Distribution using Simpson's rule
+    # Bending moment is the negative of the integral
+    return -M_eval
+
+# Calculate bending moments
+bending_moment_positive = np.array(
+    [bending_moment(x, spanwise_positions, shear_force_positive) for x in spanwise_positions]
+)
+bending_moment_negative = np.array(
+    [bending_moment(x, spanwise_positions, shear_force_negative) for x in spanwise_positions]
+)
+
+
+# Torque Distribution using numerical integration
 def torque_distribution(x_eval, distributed_load, torque_position, torque_value):
-    """Compute torque distribution using Simpson's rule."""
+    """Compute torque distribution using numerical integration."""
     load_values = np.interp(spanwise_positions, spanwise_positions, distributed_load)
     arm_length = 0.05  # Assume constant moment arm of 0.05 m
     torque_values = load_values * arm_length
     idx_eval = spanwise_positions <= x_eval
-    T_eval = simpson(y=torque_values[idx_eval], x=spanwise_positions[idx_eval])
+    T_eval = np.trapz(torque_values[idx_eval], spanwise_positions[idx_eval])
     if x_eval <= torque_position:
         T_eval += torque_value
     return T_eval
 
+
+# Compute torque distributions for positive and negative load factors
 torque_positive = np.array(
     [torque_distribution(x, distributed_load_positive, engine_position, engine_torque) for x in spanwise_positions])
 torque_negative = np.array(

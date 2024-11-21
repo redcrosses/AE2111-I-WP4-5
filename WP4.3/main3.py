@@ -1,13 +1,14 @@
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import intersect
 
 # Constants and given values
 a = 301.83  # Speed of sound at cruise altitude (m/s)
 W = 170204.185  # Aircraft weight (lb)
 Cl_clean = 1.44  # Max lift coefficient (clean configuration)
 Cl_extended = 2.73  # Max lift coefficient (flaps extended)
-rho = 1.55  # Air density at cruise altitude (kg/m³)
+rho = 0.441653  # Air density at cruise altitude (kg/m³) 1.55
 S = 93.67  # Wing area (m²)
 h = 9449.8  # Cruise altitude (m)
 
@@ -39,7 +40,7 @@ n_positive[n_positive > n_max] = n_max  # Limit the curve to n_max
 
 # Flaps-down region
 n_positive_fd= (V/Vs)**2 
-flaps_limit = np.where(V <= Vc, n_max_fd, np.nan)  # Constant n_max_fd up to Vc
+n_positive_fd[n_positive_fd > n_max_fd] = n_max_fd
 
 # Negative load factor curve
 n_negative = -n_positive
@@ -58,17 +59,13 @@ plt.plot(V,n_positive_fd, label="Positive Load Factor w. extended flaps", color=
 # Negative load factor curve
 plt.plot(V, n_negative, label="Negative Load Factor", color="green")
 
-# Flaps-down region
-plt.plot(V, flaps_limit, label="Flaps-Down Limit", color="orange", linestyle="--")
 
 # Vertical lines for key speeds
-plt.axvline(Vs0, linestyle="--", color="gray", label="Stall Speed $V_s$ (Clean)")
-plt.axvline(Vc, linestyle="--", color="purple", label="Cruise Speed $V_c$")
-plt.axvline(Vd, linestyle="--", color="red", label="Dive Speed $V_d$")
+
+plt.axvline(Vd, color="red", label="Dive Speed $V_d$")
 
 # Horizontal lines for max/min load factors
-plt.axhline(n_max, linestyle="--", color="black", label=f"Max Load Factor {n_max:.2f}")
-plt.axhline(n_min, linestyle="--", color="black", label=f"Min Load Factor {n_min:.2f}")
+
 
 plt.plot(V_linear, n_linear, color="red")
 

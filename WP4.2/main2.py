@@ -38,40 +38,40 @@ class WingBox():
     def secondmomentarea(self):
         pass
 
-def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
+def MOI_x(wingbox, stringer_area: float, stringer_positions, y: float, thickness: float, chord) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
-    beta: float = np.arctan(abs(wingbox[3][1]-wingbox[0][1])/box.width)
-    theta: float = np.arctan(abs(wingbox[2][1]-wingbox[1][1])/box.width)
+    beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/box.width)
+    theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/box.width)
     a = box.width * chord /np.cos(beta)
     b = box.width * chord /np.cos(theta)
     
     #top side
-    I_xx_1 = thickness * (a**3)*(np.sin(beta)**2)*(1/12) + (thickness*a) * (abs((a/2)*np.sin(beta))+abs(wingbox[0][1]-centroid[1])*chord)**2
+    I_xx_1 = thickness * (a**3)*(np.sin(beta)**2)*(1/12) + (thickness*a) * (abs((a/2)*np.sin(beta))+abs(wingbox[0,1]-centroid[1])*chord)**2
     #front spar
-    I_xx_2 = (box.frontsparlength * chord * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((((wingbox[0][1]+wingbox[1][1])/2)-centroid[1])*chord)**2
+    I_xx_2 = (box.frontsparlength * chord * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((((wingbox[0,1]+wingbox[1,1])/2)-centroid[1])*chord)**2
     #bottom side
-    I_xx_3 = thickness * (b**3)*(np.sin(theta)**2)*(1/12) + (thickness*b) * (abs((b/2)*np.sin(theta))+abs(wingbox[2][1]-centroid[1])*chord)**2
+    I_xx_3 = thickness * (b**3)*(np.sin(theta)**2)*(1/12) + (thickness*b) * (abs((b/2)*np.sin(theta))+abs(wingbox[2,1]-centroid[1])*chord)**2
     #rear spar
-    I_xx_4 = (box.rearsparlength * chord * thickness**3)*(1/12) + (thickness*box.rearsparlength*chord) * ((((wingbox[2][1]+wingbox[3][1])/2)-centroid[1])*chord)**2
+    I_xx_4 = (box.rearsparlength * chord * thickness**3)*(1/12) + (thickness*box.rearsparlength*chord) * ((((wingbox[2,1]+wingbox[3,1])/2)-centroid[1])*chord)**2
     #stringers
     I_stringers = sum([stringer_area*((pos[1]-centroid[1])*chord)**2 for pos in stringer_positions])
     return I_xx_1 + I_xx_2 + I_xx_3 + I_xx_4 + I_stringers
 
-def MOI_y(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
+def MOI_y(wingbox, stringer_area: float, stringer_positions, y: float, thickness: float, chord) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
-    beta: float = np.arctan(abs(wingbox[3][1]-wingbox[0][1])/box.width) #slant angle of top side
-    theta: float = np.arctan(abs(wingbox[2][1]-wingbox[1][1])/box.width) #slant angle of bottom side
+    beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/box.width) #slant angle of top side
+    theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/box.width) #slant angle of bottom side
     a = box.width * chord /np.cos(beta)
     b = box.width * chord /np.cos(theta)
     
     #top side
-    I_yy_1 = thickness * (a**3)*(np.cos(beta)**2)*(1/12) + (thickness*a) * ((wingbox[0][0]-centroid[0])*chord+(a/2)*np.cos(beta))**2
+    I_yy_1 = thickness * (a**3)*(np.cos(beta)**2)*(1/12) + (thickness*a) * ((wingbox[0,0]-centroid[0])*chord+(a/2)*np.cos(beta))**2
     #front spar
-    I_yy_2 = (box.frontsparlength * chord * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((wingbox[1][0]-centroid[0])*chord)**2
+    I_yy_2 = (box.frontsparlength * chord * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((wingbox[1,0]-centroid[0])*chord)**2
     #bottom side
-    I_yy_3 = thickness * (b**3)*(np.cos(theta)**2)*(1/12) + (thickness*b) * ((wingbox[2][0]-centroid[0])*chord+(b/2)*np.cos(theta))**2
+    I_yy_3 = thickness * (b**3)*(np.cos(theta)**2)*(1/12) + (thickness*b) * ((wingbox[2,0]-centroid[0])*chord+(b/2)*np.cos(theta))**2
     #rear spar
-    I_yy_4 = (box.rearsparlength * chord * thickness**3)*(1/12) + (thickness*box.rearsparlength) * ((wingbox[2][0]-centroid[0])*chord)**2
+    I_yy_4 = (box.rearsparlength * chord * thickness**3)*(1/12) + (thickness*box.rearsparlength) * ((wingbox[2,0]-centroid[0])*chord)**2
     #stringers
     I_stringers = sum([stringer_area*((pos[0]-centroid[0])*chord)**2 for pos in stringer_positions])
     return I_yy_1 + I_yy_2 + I_yy_3 + I_yy_4 + I_stringers

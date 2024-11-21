@@ -46,10 +46,11 @@ class WingBox():
         self.topline = np.array([list(self.trapezoid[0]), list(self.trapezoid[-1])])
         self.bottomline = self.trapezoid[1:3,:]
         topsiden = int(n/2)
-        self.stringerspacing = self.width*0.9/topsiden
-        toppos = self.topline[:,0][0] + self.width*0.1
+        spacing_coeff = 0.95
+        self.stringerspacing = self.width*spacing_coeff/topsiden
+        toppos = self.topline[:,0][0] + self.width*(1-spacing_coeff)
         bottomsiden = n-topsiden
-        bottompos = self.bottomline[:,0][0] + self.width*0.1
+        bottompos = self.bottomline[:,0][0] + self.width*(1-spacing_coeff)
         for i in range(topsiden): #make stringers on top
             ypos = np.interp(toppos, self.topline[:,0], self.topline[:,1])
             self.stringers = np.append(self.stringers, np.array([[toppos],[ypos]]), axis=1)

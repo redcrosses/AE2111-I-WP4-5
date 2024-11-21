@@ -36,15 +36,33 @@ class WingBox():
         self.wingboxtodisp = self.trapezoid
         self.wingboxtodisp = np.append(self.trapezoid, [self.trapezoid[0]], axis=0)
         self.x2,self.y2 = zip(*self.wingboxtodisp)
-        
+        plt.plot(self.stringers[:,0], self.stringers[:,1], "o")
         plt.plot(self.x1,self.y1)
         plt.plot(self.x2,self.y2)
         plt.gca().set_aspect('equal')
         plt.show()
-    def makestringers(self):
-        self.topline = self.trapezoid[1:2]
-        self.bottomline = self.trapezoid[2:3]
-        return
+    def makestringers(self, n):
+        self.stringers = np.array([[],[]]) #stringer positions array
+        self.topline = np.array([list(self.trapezoid[0]), list(self.trapezoid[-1])])
+        self.bottomline = self.trapezoid[1:3,:]
+        topsiden = int(n/2)
+        spacing = self.width*0.9/topsiden
+        toppos = self.topline[:,0][0] + self.width*0.1
+        bottomsiden = n-topsiden
+        bottompos = self.bottomline[:,0][0] + self.width*0.1
+        for i in range(topsiden): #make stringers on top
+            ypos = np.interp(toppos, self.topline[:,0], self.topline[:,1])
+            self.stringers = np.append(self.stringers, np.array([[toppos],[ypos]]), axis=1)
+            toppos += spacing
+            # print("toppos: ", toppos, "ypos", ypos)
+        for i in range(bottomsiden):
+            ypos = np.interp(bottompos, self.bottomline[:,0], self.bottomline[:,1])
+            self.stringers = np.append(self.stringers, np.array([[bottompos],[ypos]]), axis=1)
+            bottompos += spacing
+        self.stringers = self.stringers.transpose()
+        # print(self.stringers)
+        pass
+    
     def centroid(self):
         pass
     def secondmomentarea(self):
@@ -93,7 +111,6 @@ def J(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple
     moi_y = MOI_y(wingbox, stringer_area, stringer_positions, y, thickness, chord)
     return moi_x + moi_y
 
-
 #compute deflection profiles of the wing (app.D.2)
 
 def Mx(y): 
@@ -132,8 +149,8 @@ def theta(y):
 
 #draw/have the geomerty of a wing box 
 box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
+box.makestringers(20)
 box.draw()
-box.makestringers()
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length
 #box.rearsparlength provides the rear spar length

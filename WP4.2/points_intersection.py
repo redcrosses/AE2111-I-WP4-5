@@ -22,7 +22,7 @@ def find_intersections(airfoil_points, y_vals):
                     frontspar1 = np.array([frontsparpos, frontspary1])
                     frontspar2 = np.array([frontsparpos, frontspary2])
 
-                    print("Front: ", frontspar1, frontspar2)
+                    # print("Front: ", frontspar1, frontspar2)
                     first = False
             except:
                 print("\033[91mFront spar length too large\033[00m")
@@ -38,12 +38,12 @@ def find_intersections(airfoil_points, y_vals):
                     rearspar1 = np.array([rearsparpos, rearspary1])
                     rearspar2 = np.array([rearsparpos, rearspary2])
 
-                    print("Rear: ", rearspar1, rearspar2)
+                    # print("Rear: ", rearspar1, rearspar2)
                     break
             except:
                 print("\033[91mRear spar length too large\033[00m")
     intersections = np.array([frontspar1, frontspar2, rearspar2, rearspar1])
-    print("Trapezoid points:", intersections)
+    # print("Trapezoid points:", intersections)
     return intersections
 def run(y_vals):
     file_path = "WP4.2/fx60126.dat"

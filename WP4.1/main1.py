@@ -29,7 +29,7 @@ def read_avl_data(avl_file):
     return np.array(data[int(len(data)/2)::])
 
 # Load AVL Data
-avl_file = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/AVL.txt"
+avl_file = "WP4.1/AVL.txt"
 avl_data = read_avl_data(avl_file)
 
 # Extract Data

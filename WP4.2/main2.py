@@ -46,19 +46,19 @@ class WingBox():
         self.topline = np.array([list(self.trapezoid[0]), list(self.trapezoid[-1])])
         self.bottomline = self.trapezoid[1:3,:]
         topsiden = int(n/2)
-        spacing = self.width*0.9/topsiden
+        self.stringerspacing = self.width*0.9/topsiden
         toppos = self.topline[:,0][0] + self.width*0.1
         bottomsiden = n-topsiden
         bottompos = self.bottomline[:,0][0] + self.width*0.1
         for i in range(topsiden): #make stringers on top
             ypos = np.interp(toppos, self.topline[:,0], self.topline[:,1])
             self.stringers = np.append(self.stringers, np.array([[toppos],[ypos]]), axis=1)
-            toppos += spacing
+            toppos += self.stringerspacing
             # print("toppos: ", toppos, "ypos", ypos)
         for i in range(bottomsiden):
             ypos = np.interp(bottompos, self.bottomline[:,0], self.bottomline[:,1])
             self.stringers = np.append(self.stringers, np.array([[bottompos],[ypos]]), axis=1)
-            bottompos += spacing
+            bottompos += self.stringerspacing
         self.stringers = self.stringers.transpose()
         # print(self.stringers)
         pass
@@ -149,7 +149,7 @@ def theta(y):
 
 #draw/have the geomerty of a wing box 
 box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
-box.makestringers(20)
+box.makestringers(30)
 box.draw()
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length

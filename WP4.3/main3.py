@@ -26,6 +26,11 @@ Vd = 320.69  # Dive speed (m/s)
 n_min = -1  # Minimum load factor
 n_max_fd = 2  # Max load factor (flaps down)
 n_max = 2.1 + (24000 / (W + 10000))  # Max load factor in clean configuration
+if n_max<2.5:
+	n_max=2.5
+elif n_max>3.8:
+	n_max=3.8
+
 
 # Define velocity range for plotting
 V = np.linspace(0, Vd, 500)  # Speeds from 0 to Vd

@@ -41,12 +41,11 @@ class WingBox():
         plt.plot(self.x2,self.y2)
         plt.gca().set_aspect('equal')
         plt.show()
-    def makestringers(self, n):
+    def makestringers(self, n, spacing_coeff):
         self.stringers = np.array([[],[]]) #stringer positions array
         self.topline = np.array([list(self.trapezoid[0]), list(self.trapezoid[-1])])
         self.bottomline = self.trapezoid[1:3,:]
         topsiden = int(n/2)
-        spacing_coeff = 0.95
         self.stringerspacing = self.width*spacing_coeff/topsiden
         toppos = self.topline[:,0][0] + self.width*(1-spacing_coeff)
         bottomsiden = n-topsiden
@@ -150,7 +149,7 @@ def theta(y):
 
 #draw/have the geomerty of a wing box 
 box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
-box.makestringers(30)
+box.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
 box.draw()
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length

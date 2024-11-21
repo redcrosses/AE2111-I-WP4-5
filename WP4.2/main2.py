@@ -42,7 +42,7 @@ box.draw()
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length
 #box.rearsparlength provides the rear spar length
-#box.length provides the length between the spars
+#box.width provides the length between the spars
 
 #calculate the centroid, second moment of area
 
@@ -87,13 +87,6 @@ def MOI_y(wingbox: list[tuple], stringer_area: float, stringer_positions: list[t
 def J(y: float) -> float:
     return
 
-def bending_displacement(MOI: float, loads: list) -> list[float]:
-    return
-
-def torsion_rotation(G: float, loads: list) -> list[float]:
-    return
-
-
 #compute deflection profiles of the wing (app.D.2)
 
 def Mx(y): 
@@ -112,7 +105,9 @@ def GJ(y):
     #shiyu function * G
     return y
 
-def dv_dy(y):
+#deflection functions
+
+def dv_dy(y): 
     integral, _ = quad(lambda x: -Mx(x) / EI_xx(x), 0, y)
     return integral
 

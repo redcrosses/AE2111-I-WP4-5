@@ -51,12 +51,11 @@ class WingBox():
         pass
 
 def MOI_x(wingbox, stringer_area: float, stringer_positions, y: float, thickness: float, chord) -> float:
-def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
     beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/box.width)
     theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/box.width)
-    a = box.width * chord /np.cos(beta)
-    b = box.width * chord /np.cos(theta)
+    a = box.width /np.cos(beta)
+    b = box.width /np.cos(theta)
     
     #top side
     I_xx_1 = thickness * (a**3)*(np.sin(beta)**2)*(1/12) + (thickness*a) * (abs((a/2)*np.sin(beta))+abs(wingbox[0,1]-centroid[1]))**2

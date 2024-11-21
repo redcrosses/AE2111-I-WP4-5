@@ -10,11 +10,12 @@ import points_intersection
 #- The wing tip rotation should not exceed +/- 10°.
 
 class WingBox():
-    def __init__(self, frontsparlength, rearsparlength):
+    def __init__(self, frontsparlength, rearsparlength, skin_thickness):
         self.frontsparlength: float = frontsparlength
         self.rearsparlength: float = rearsparlength
         self.trapezoid = points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
         self.width: float = self.trapezoid[2,0] - self.trapezoid[1,0] #width between the front and rear spar
+        self.thickness: float = skin_thickness
 
     def draw(self):
         #wingbox
@@ -36,15 +37,6 @@ class WingBox():
         pass
     def secondmomentarea(self):
         pass
-#draw/have the geomerty of a wing box 
-box = WingBox(0.11,0.09) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
-box.draw()
-#box.trapezoid provides the trapezoid points, 
-#box.frontsparlength provides the front spar length
-#box.rearsparlength provides the rear spar length
-#box.width provides the length between the spars
-
-#calculate the centroid, second moment of area
 
 def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
@@ -67,8 +59,8 @@ def MOI_x(wingbox: list[tuple], stringer_area: float, stringer_positions: list[t
 
 def MOI_y(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
-    beta: float = np.arctan(abs(wingbox[3][1]-wingbox[0][1])/box.width)
-    theta: float = np.arctan(abs(wingbox[2][1]-wingbox[1][1])/box.width)
+    beta: float = np.arctan(abs(wingbox[3][1]-wingbox[0][1])/box.width) #slant angle of top side
+    theta: float = np.arctan(abs(wingbox[2][1]-wingbox[1][1])/box.width) #slant angle of bottom side
     a = box.width/np.cos(beta)
     b = box.width/np.cos(theta)
     
@@ -122,3 +114,12 @@ def theta(y):
     integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
     return integral
 
+#draw/have the geomerty of a wing box 
+box = WingBox(0.11,0.09) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
+box.draw()
+#box.trapezoid provides the trapezoid points, 
+#box.frontsparlength provides the front spar length
+#box.rearsparlength provides the rear spar length
+#box.width provides the length between the spars
+
+#calculate the centroid, second moment of area

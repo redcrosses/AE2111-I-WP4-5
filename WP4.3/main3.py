@@ -1,7 +1,8 @@
 import math
+from intersect import intersection
 import matplotlib.pyplot as plt
 import numpy as np
-import intersect
+
 
 # Constants and given values
 a = 301.83  # Speed of sound at cruise altitude (m/s)
@@ -33,6 +34,7 @@ elif n_max>3.8:
 	n_max=3.8
 
 
+
 # Define velocity range for plotting
 V = np.linspace(0, Vd, 500)  # Speeds from 0 to Vd
 n_positive = (V / Vs0) ** 2  # Positive load factor curve (clean configuration)
@@ -41,29 +43,37 @@ n_positive[n_positive > n_max] = n_max  # Limit the curve to n_max
 # Flaps-down region
 n_positive_fd= (V/Vs)**2 
 n_positive_fd[n_positive_fd > n_max_fd] = n_max_fd
-
-# Negative load factor curve
-n_negative = -n_positive
-n_negative[n_negative < n_min] = n_min  # Limit the negative curve to n_min
+V_flap = np.linspace(0, Vd, 500)
+int_flap = list(intersection(V, n_positive, V, n_positive_fd))[0][1]
+V_flap[V_flap > int_flap] = int_flap
 
 #linear part from n_min to zero
 # Linear segment from n_min to 0 between V_c and V_d
 V_linear = np.linspace(Vc, Vd, 100)
 n_linear = np.linspace(n_min, 0, 100)  # Linear interpolation from n_min to 0
 # Plotting
+
+# Negative load factor curve
+n_negative = -n_positive
+n_negative[n_negative < n_min] = n_min  # Limit the negative curve to n_min
+V_neg = np.linspace(0, Vd, 500)
+int_neg = list(intersection(V, n_negative, V_linear, n_linear))[0]
+V_neg[V_neg > int_neg] = int_neg
+
 plt.figure(figsize=(10, 6))
 
 # Positive load factor curve
 plt.plot(V, n_positive, label="Positive Load Factor", color="blue")
-plt.plot(V,n_positive_fd, label="Positive Load Factor w. extended flaps", color="yellow")
+plt.plot(V_flap,n_positive_fd, label="Positive Load Factor w. extended flaps", color="orange")
 # Negative load factor curve
-plt.plot(V, n_negative, label="Negative Load Factor", color="green")
+plt.plot(V_neg, n_negative, label="Negative Load Factor", color="green")
 
 
 # Vertical lines for key speeds
 
-plt.axvline(Vd, color="red", label="Dive Speed $V_d$")
-
+#plt.axvline(Vd, color="red", label="Dive Speed $V_d$")
+#plt.plot(V, np.ones(500)*Vd, color="red", label="Dive Speed $V_d$")
+plt.vlines(x=Vd, ymin=0, ymax=n_max, color='red', label="Dive Speed $V_d$")
 # Horizontal lines for max/min load factors
 
 

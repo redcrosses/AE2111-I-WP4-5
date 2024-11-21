@@ -9,6 +9,10 @@ import points_intersection
 #- The wing tip displacement should not exceed 15% of the total span of the wing.
 #- The wing tip rotation should not exceed +/- 10°.
 
+#CONSTANTS <3
+E = 72.4 * 10**9
+G = 27 * 10**9
+
 class WingBox():
     def __init__(self, frontsparlength, rearsparlength, skin_thickness):
         self.frontsparlength: float = frontsparlength
@@ -76,8 +80,11 @@ def MOI_y(wingbox: list[tuple], stringer_area: float, stringer_positions: list[t
     I_stringers = sum([stringer_area*(abs(pos[0])-centroid[0])**2 for pos in stringer_positions])
     return I_yy_1 + I_yy_2 + I_yy_3 + I_yy_4 + I_stringers
 
-def J(y: float) -> float:
-    return
+def J(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
+    moi_x = MOI_x(wingbox, stringer_area, stringer_positions, y, thickness, chord)
+    moi_y = MOI_y(wingbox, stringer_area, stringer_positions, y, thickness, chord)
+    return moi_x + moi_y
+
 
 #compute deflection profiles of the wing (app.D.2)
 
@@ -85,17 +92,18 @@ def Mx(y):
     #WP4.1
     return y
 
-def EI_xx(y): 
-    #shiyu function * E
-    return y
+def EI_xx_compute(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float: 
+    I_xx = MOI_x(wingbox, stringer_area, stringer_positions, y, thickness, chord)
+    EI_xx = E * I_xx
+    return EI_xx
 
 def T(y): 
     #WP4.1
     return y
 
-def GJ(y): 
-    #shiyu function * G
-    return y
+def GJ(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
+    J = J(wingbox, stringer_area, stringer_positions, y, thickness, chord)
+    return G * J
 
 #deflection functions
 

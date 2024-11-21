@@ -31,12 +31,14 @@ def read_avl_data(avl_file):
                 except ValueError:
                     # Skip invalid rows (non-numeric)
                     continue
-    return np.array(data)
+                
+    data = np.array(data)
+    return data[int(len(data)/2)::]
 
 # Process AVL data
 avl_file = "WP4.1/AVL.txt"
 avl_data = read_avl_data(avl_file)
-
+print(avl_data)
 # Extract spanwise position (y), chord (c), Cl, and Cd
 spanwise_positions = avl_data[:, 0]  # y-span
 chords = avl_data[:, 1]  # Chord

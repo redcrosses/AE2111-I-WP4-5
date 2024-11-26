@@ -68,7 +68,8 @@ class WingBox():
     def secondmomentarea(self):
         pass
 
-def MOI_x(wingbox, stringer_area: float, stringer_positions, y: float, thickness: float, chord) -> float:
+def MOI_x(box, stringer_area: float, stringer_positions, thickness: float) -> float:
+    wingbox = box.trapezoid
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
     beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/box.width)
     theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/box.width)
@@ -87,23 +88,24 @@ def MOI_x(wingbox, stringer_area: float, stringer_positions, y: float, thickness
     I_stringers = sum([stringer_area*((pos[1]-centroid[1]))**2 for pos in stringer_positions])
     return I_xx_1 + I_xx_2 + I_xx_3 + I_xx_4 + I_stringers
 
-def MOI_y(wingbox, stringer_area: float, stringer_positions, y: float, thickness: float, chord) -> float:
+def MOI_y(box, stringer_area: float, stringer_positions, thickness: float) -> float:
+    wingbox = box.trapezoid
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
     beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/box.width) #slant angle of top side
     theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/box.width) #slant angle of bottom side
-    a = box.width * chord /np.cos(beta)
-    b = box.width * chord /np.cos(theta)
+    a = box.width /np.cos(beta)
+    b = box.width /np.cos(theta)
     
     #top side
-    I_yy_1 = thickness * (a**3)*(np.cos(beta)**2)*(1/12) + (thickness*a) * ((wingbox[0,0]-centroid[0])*chord+(a/2)*np.cos(beta))**2
+    I_yy_1 = thickness * (a**3)*(np.cos(beta)**2)*(1/12) + (thickness*a) * ((wingbox[0,0]-centroid[0])+(a/2)*np.cos(beta))**2
     #front spar
-    I_yy_2 = (box.frontsparlength * chord * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((wingbox[1,0]-centroid[0])*chord)**2
+    I_yy_2 = (box.frontsparlength * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((wingbox[1,0]-centroid[0]))**2
     #bottom side
-    I_yy_3 = thickness * (b**3)*(np.cos(theta)**2)*(1/12) + (thickness*b) * ((wingbox[2,0]-centroid[0])*chord+(b/2)*np.cos(theta))**2
+    I_yy_3 = thickness * (b**3)*(np.cos(theta)**2)*(1/12) + (thickness*b) * ((wingbox[2,0]-centroid[0])+(b/2)*np.cos(theta))**2
     #rear spar
-    I_yy_4 = (box.rearsparlength * chord * thickness**3)*(1/12) + (thickness*box.rearsparlength) * ((wingbox[2,0]-centroid[0])*chord)**2
+    I_yy_4 = (box.rearsparlength * thickness**3)*(1/12) + (thickness*box.rearsparlength) * ((wingbox[2,0]-centroid[0]))**2
     #stringers
-    I_stringers = sum([stringer_area*((pos[0]-centroid[0])*chord)**2 for pos in stringer_positions])
+    I_stringers = sum([stringer_area*((pos[0]-centroid[0]))**2 for pos in stringer_positions])
     return I_yy_1 + I_yy_2 + I_yy_3 + I_yy_4 + I_stringers
 
 def J(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
@@ -151,6 +153,9 @@ def theta(y):
 box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
 box.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
 box.draw()
+print(box.trapezoid)
+box.MOI_x = MOI_x(box, 0, box.stringers, box.thickness)
+box.MOI_y = MOI_y(box, 0, box.stringers, box.thickness)
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length
 #box.rearsparlength provides the rear spar length

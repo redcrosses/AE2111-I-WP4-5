@@ -25,8 +25,3 @@ def centroid_of_quadrilateral(points):
     Cy /= (6 * A)
     
     return Cx, Cy
-
-# Example usage
-quadrilateral = [(0, 0), (4, 0), (4, 3), (0, 6)]  # Example coordinates
-centroid = centroid_of_quadrilateral(quadrilateral)
-print("Centroid:", centroid)

@@ -19,6 +19,7 @@ class WingBox():
         self.rearsparlength: float = rearsparlength
         self.thickness: float = skin_thickness
         self.trapezoid = points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
+        self.stringerarea = 0
         # self.stringers = self.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
 
         # #airfoil
@@ -38,10 +39,10 @@ class WingBox():
         plt.plot(self.x2,self.y2)
         plt.gca().set_aspect('equal')
         plt.show()
-    def makestringers(self, n, spacing_coeff):
+    def makestringers(self, trapezoid, n, spacing_coeff):
         self.stringers = np.array([[],[]]) #stringer positions array
-        self.topline = np.array([list(self.trapezoid[0]), list(self.trapezoid[-1])])
-        self.bottomline = self.trapezoid[1:3,:]
+        self.topline = np.array([list(trapezoid[0]), list(trapezoid[-1])])
+        self.bottomline = trapezoid[1:3,:]
         topsiden = int(n/2)
         self.stringerspacing = self.width*spacing_coeff/topsiden
         toppos = self.topline[:,0][0] + self.width*(1-spacing_coeff)
@@ -60,42 +61,40 @@ class WingBox():
         # print(self.stringers)
         pass
     
-    def MOI_x(self, stringer_area: float, stringer_positions, thickness: float) -> float:
-        wingbox = self.trapezoid
+    def MOI_x(self, wingbox, stringer_area: float, stringer_positions, thickness: float, width: float) -> float:
         centroid: float = tuple(centroid_of_quadrilateral(wingbox))
-        beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/self.width)
-        theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/self.width)
+        beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/width)
+        theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/width)
         a = self.width /np.cos(beta)
         b = self.width /np.cos(theta)
         
         #top side
         I_xx_1 = thickness * (a**3)*(np.sin(beta)**2)*(1/12) + (thickness*a) * (abs((a/2)*np.sin(beta))+abs(wingbox[0,1]-centroid[1]))**2
         #front spar
-        I_xx_2 = (box.frontsparlength * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((((wingbox[0,1]+wingbox[1,1])/2)-centroid[1]))**2
+        I_xx_2 = (self.frontsparlength * thickness**3)*(1/12) + (thickness*self.frontsparlength) * ((((wingbox[0,1]+wingbox[1,1])/2)-centroid[1]))**2
         #bottom side
         I_xx_3 = thickness * (b**3)*(np.sin(theta)**2)*(1/12) + (thickness*b) * (abs((b/2)*np.sin(theta))+abs(wingbox[2,1]-centroid[1]))**2
         #rear spar
-        I_xx_4 = (box.rearsparlength * thickness**3)*(1/12) + (thickness*box.rearsparlength) * ((((wingbox[2,1]+wingbox[3,1])/2)-centroid[1]))**2
+        I_xx_4 = (self.rearsparlength * thickness**3)*(1/12) + (thickness*self.rearsparlength) * ((((wingbox[2,1]+wingbox[3,1])/2)-centroid[1]))**2
         #stringers
         I_stringers = sum([stringer_area*((pos[1]-centroid[1]))**2 for pos in stringer_positions])
         return I_xx_1 + I_xx_2 + I_xx_3 + I_xx_4 + I_stringers
 
-    def MOI_y(self, stringer_area: float, stringer_positions, thickness: float) -> float:
-        wingbox = self.trapezoid
+    def MOI_y(self, wingbox, stringer_area: float, stringer_positions, thickness: float, width: float) -> float:
         centroid: float = tuple(centroid_of_quadrilateral(wingbox))
-        beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/self.width) #slant angle of top side
-        theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/self.width) #slant angle of bottom side
+        beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/width) #slant angle of top side
+        theta: float = np.arctan(abs(wingbox[2,1]-wingbox[1,1])/width) #slant angle of bottom side
         a = self.width /np.cos(beta)
         b = self.width /np.cos(theta)
         
         #top side
         I_yy_1 = thickness * (a**3)*(np.cos(beta)**2)*(1/12) + (thickness*a) * ((wingbox[0,0]-centroid[0])+(a/2)*np.cos(beta))**2
         #front spar
-        I_yy_2 = (box.frontsparlength * thickness**3)*(1/12) + (thickness*box.frontsparlength) * ((wingbox[1,0]-centroid[0]))**2
+        I_yy_2 = (self.frontsparlength * thickness**3)*(1/12) + (thickness*self.frontsparlength) * ((wingbox[1,0]-centroid[0]))**2
         #bottom side
         I_yy_3 = thickness * (b**3)*(np.cos(theta)**2)*(1/12) + (thickness*b) * ((wingbox[2,0]-centroid[0])+(b/2)*np.cos(theta))**2
         #rear spar
-        I_yy_4 = (box.rearsparlength * thickness**3)*(1/12) + (thickness*box.rearsparlength) * ((wingbox[2,0]-centroid[0]))**2
+        I_yy_4 = (self.rearsparlength * thickness**3)*(1/12) + (thickness*self.rearsparlength) * ((wingbox[2,0]-centroid[0]))**2
         #stringers
         I_stringers = sum([stringer_area*((pos[0]-centroid[0]))**2 for pos in stringer_positions])
         return I_yy_1 + I_yy_2 + I_yy_3 + I_yy_4 + I_stringers
@@ -106,19 +105,29 @@ class WingBox():
     def run(self):
         span_positions = np.linspace(0, 27.47721 ,100)
         chords = np.interp(span_positions, [0, 27.47721], [5.24140, 1.57714])
-        trapezoids_x = np.array([])
-        trapezoids_y = np.array([])
-        widths = np.array([])
-        print(self.trapezoid[:,0])
-        for chord in chords: 
-            trapezoids_x = np.append(trapezoids_x, self.trapezoid[:,0] * chord)
-            trapezoids_y = np.append(trapezoids_y, self.trapezoid[:,1] * chord)
-            # allstringers = self.stringers 
-            # MOI_xs = self.MOI_x(0, box.stringers, box.thickness)
-            # MOI_ys = self.MOI_y(0, box.stringers, box.thickness)
 
-        # plt.scatter(trapezoids_x, trapezoids_y, span_positions)
-        # plt.show()
+        self.trapezoids = np.empty([1,2])
+        self.widths = np.array([])
+
+        for chord in chords: 
+            self.trapezoid_i = self.trapezoid * chord
+            self.trapezoids = np.concatenate((self.trapezoids, self.trapezoid_i)) #every four points is a new trapezoid
+            self.stringers = self.makestringers(self.trapezoid_i, 20,0.95)
+            self.width = 
+            self.MOI = np.array([self.MOI_x(self.trapezoid_i, self.stringerarea, self.stringers, self.thickness, self.width), self.MOI_y(self.trapezoid_i, self.stringerarea, self.stringers, self.thickness, self.width)]) #no stringer area
+            #MOI_x, MOI_y
+            self.MOIs = np.concatenate(self.MOIs, self.MOI)
+        print(self.MOIs)
+
+        #plotting
+        z_axis = []
+        z_axis = np.sort(np.concatenate((z_axis, span_positions, span_positions, span_positions, span_positions)))
+        
+        ax = plt.axes(projection='3d')
+        ax.set(xlim3d=[0,3], ylim3d=[0,3], zlim3d=[0,30], box_aspect=(1, 1, 3))
+        ax.scatter3D(self.trapezoids[1:,0], self.trapezoids[1:,1], z_axis, color="black")
+
+        plt.show()
 #compute deflection profiles of the wing (app.D.2)
 
 def Mx(y): 

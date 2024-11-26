@@ -29,7 +29,7 @@ def read_avl_data(avl_file):
     return np.array(data[int(len(data)/2)::])
 
 # Load AVL Data
-avl_file = "WP4.1/AVL.txt"
+avl_file = "AVL.txt"
 avl_data = read_avl_data(avl_file)
 
 # Extract Data
@@ -44,9 +44,9 @@ D_dist = 0.5 * rho * velocity**2 * Cds * chords
 N_dist = np.cos(alpha_a) * L_dist + np.sin(alpha_a) * D_dist
 
 # Engine Properties
-engine_position = 10
-engine_weight = 200000
-engine_torque = 10000
+engine_position = 3.9
+engine_weight = 56016.8
+engine_torque = 240000
 
 # Load Factors
 load_factor_positive = 2.5
@@ -67,7 +67,7 @@ def compute_shear_force(x_eval, spanwise_positions, distributed_load, point_load
 
     S_eval = -integral_w
     if x_eval <= point_load_position:
-        S_eval -= point_load
+        S_eval += point_load
 
     return S_eval
 

@@ -35,8 +35,8 @@ class WingBox():
         
     def draw(self):
         fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        fig.tight_layout()
+        #vvv first subplot vvv
+        ax = fig.add_subplot(1,2,1, projection='3d')
         ax.set(xlim3d=[0,15], ylim3d=[0,3], zlim3d=[0,30], box_aspect=(3, 3/5, 6))
         self.sweep = np.radians(25)
         # #airfoil
@@ -56,12 +56,16 @@ class WingBox():
         x = np.vstack([x, self.trapezoids_sized[-4:,0] + np.sin(self.sweep)*27.47721])
         y = np.vstack([y, self.trapezoids_sized[-4:,1]]) #close enough for now but it's wrong lol
         z = np.vstack([z, np.full_like(z,27.47721)])
-        print(x,y,x.shape)
+        # print(x,y,x.shape)
 
         airfoil = ax.plot_surface(airfoil_x, airfoil_y, airfoil_z, linewidth=0, alpha=0.25)
         surface = ax.plot_surface(x, y, z, alpha=1, linewidth=0,antialiased=False)
         manager = plt.get_current_fig_manager()
 
+        #vvv second subplot vvv idk deflections or other graphs
+        ax = fig.add_subplot(1,2,2)
+
+        fig.tight_layout()
         plt.show()
 
     def makestringers(self, trapezoid, n, spacing_coeff):
@@ -173,6 +177,6 @@ def theta(y):
 #draw/have the geomerty of a wing box 
 box = WingBox(0.11,0.09, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil), airfoil skin thickness [m]
 box.draw()
-print(box.trapezoids_sized.shape, box.MOIs.shape)
-#box.trapezoids_sized gives the trapezoids along the provided span range as a numpy array. Every four points is a new trapezoid.
+print(box.MOIs)
+#box.trapezoids_sized gives the trapezoids along the provided span range as a numpy array (span_positions). Every four points is a new trapezoid.
 #box.MOIs gives the moment of inertias. first column is MOI_x and second column is MOI_y

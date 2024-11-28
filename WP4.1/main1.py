@@ -66,7 +66,7 @@ N_dist = np.cos(alpha_a) * L_dist + np.sin(alpha_a) * D_dist
 
 # # Engine Properties
 engine_position = 3.9 # [m]
-engine_weight = 56016.8 #[kg]
+engine_weight = 2858 * 9.80655  #[N]
 engine_torque = 240000  #[Nm]
 
 # Load Factors
@@ -88,28 +88,28 @@ def coefficients(Cls0, Cls10, CLd, ):
     CT = CLds * np.sin(alpha* np.pi/180) +CD * np.cos(alpha* np.pi/180)
     return(CN,CT)
 
-def dimensionalize(CN,CT)
-    N= CN * 0.5* rho* v**2 * chords
-    T = CT* 0.5 * rho * v ** 2 * chords
-    return(N,T)
+def dimensionalize(CN):
+    N = CN * 0.5* rho* V ** 2 * chords
+    return(N)
 
-#
-# # Functions
-# def interpolate_distributed_load(x, spanwise_positions, distributed_load):
-#     return np.interp(x, spanwise_positions, distributed_load)
-#
-# def compute_shear_force(x_eval, spanwise_positions, distributed_load, point_load_position, point_load):
-#     def distributed_load_function(x):
-#         return interpolate_distributed_load(x, spanwise_positions, distributed_load)
-#
-#     integral_w, _ = quad(distributed_load_function, x_eval, wing_span)
-#
-#     S_eval = -integral_w
-#     if x_eval <= point_load_position:
-#         S_eval += point_load
-#
-#     return S_eval
-#
+def distributed_shear_force(N, Z, L, point_loads=None):
+    integral, _ = quad(N, Z, L)
+
+    # Contribution from point loads
+    point_load_contribution = engine_weight
+    if point_loads:
+        for P, z_p in point_loads:
+            if Z<= z_p <= L:  # Include point load contributions only if they are within x and L
+                point_load_contribution += P
+
+    # Shear force at x
+    S_x = -integral - point_load_contribution
+    return S_x
+
+
+
+
+
 # def bending_moment(x_eval, spanwise_positions, shear_force_function):
 #     def shear_integral(x):
 #         return shear_force_function(x)

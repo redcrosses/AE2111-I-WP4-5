@@ -122,7 +122,7 @@ def T(y):
 
 
 def run_design_config(frontsparlength, rearsparlength, stringer_area, skin_thickness):
-    span_positions = np.linspace(0, 27.47721 ,100)
+    span_positions = np.linspace(0, 27.47721/2 ,100)
     chords_along_span = np.column_stack((np.interp(span_positions, [0, 27.47721], [5.24140, 1.57714]), span_positions))
     bending_displacement: list = []
     torsion: list = []

@@ -32,9 +32,9 @@ def read_xflr_data(file):
     return np.array(data[int(len(data)/2)::])
 
 # Load AVL Data
-xflr_file_0 = "XFLR0.txt"
+xflr_file_0 = "WP4.1/XFLR0.txt"
 xflr_data_0 = read_xflr_data(xflr_file_0)
-xflr_file_10 = "XFLR10"
+xflr_file_10 = "WP4.1/XFLR10"
 xflr_data_10 = read_xflr_data(xflr_file_10)
 
 # Extract Data
@@ -66,7 +66,7 @@ print(Cm_0)
 
 # # Engine Properties
 engine_position = 3.9 # [m]
-engine_weight = 56016.8 #[kg]
+engine_weight = 2858 * 9.80665 #[N]
 engine_torque = 240000  #[Nm]
 
 # Load Factors
@@ -97,6 +97,24 @@ def dimensionalize(CN,CT,chords):
     T = CT* 0.5 * rho * v ** 2 * chords
     M = CM * 0.5* rho * v**2 * chords**2
     return(N,M)
+
+def distributed_shear_force(N, z, L, point_loads=None):
+    # Integral for the distributed load
+    integral, _ = quad(w, x, L)
+
+    # Contribution from point loads
+    point_load_contribution = engine_weight
+    if point_loads:
+        for P, z_p in point_loads:
+            if x <= z_p <= L:  # Include point load contributions only if they are within x and L
+                point_load_contribution += P
+
+    # Shear force at x
+    S_x = -integral - point_load_contribution
+    return S_x
+
+
+
 
 #
 # # Functions

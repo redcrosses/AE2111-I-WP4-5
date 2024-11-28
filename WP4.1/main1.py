@@ -24,8 +24,8 @@ def read_xflr_data(file):
                 break
             if data_start:
                 try:
-                    values = list(map(float, line.split()[:6]))
-                    if len(values) == 6:
+                    values = list(map(float, line.split()[:8]))
+                    if len(values) == 8:
                         data.append(values)
                 except ValueError:
                     continue
@@ -47,18 +47,21 @@ Cd_induced_0 = xflr_data_0[:, 5]
 Cls_10 = xflr_data_10[:, 3]
 Cd_induced_10 = xflr_data_10[:, 5]
 
-Cm_0 = xflr_data_0[:, 9]
-Cm_10 = xflr_data_10[:, 9]
+
+Cm_0 = xflr_data_0[:, 7]
+Cm_10 = xflr_data_10[:, 7]
 print(Cm_0)
-Cls_0_interpolated = sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
-Cls_10_interpolated = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
+
+
+Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
+Cls_10 = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
 
 
 
  # Calculate Distributed Loads
-L_dist = 0.5 * rho * velocity**2 * Cls_0_interpolated(spanwise_positions) * chords
-D_dist = 0.5 * rho * velocity**2 * Cd_induced_0 * chords
-N_dist = np.cos(alpha_a) * L_dist + np.sin(alpha_a) * D_dist
+#L_dist = 0.5 * rho * velocity**2 * Cls_0_interpolated(spanwise_positions) * chords
+#D_dist = 0.5 * rho * velocity**2 * Cd_induced_0 * chords
+#N_dist = np.cos(alpha_a) * L_dist + np.sin(alpha_a) * D_dist
 
 
 # # Engine Properties
@@ -70,8 +73,32 @@ engine_torque = 240000  #[Nm]
 load_factor_positive = 2.5
 load_factor_negative = -1.5
 
-distributed_load_positive = N_dist * load_factor_positive
-distributed_load_negative = N_dist * load_factor_negative
+#distributed_load_positive = N_dist * load_factor_positive
+#distributed_load_negative = N_dist * load_factor_negative
+
+
+def coefficients(Cls0, Cls10, CLd, Cm_0, Cm_10 ):
+
+    CLds = Cls0 + (CLd - Cls0)/(Cls10- Cls0) * ( Cls0- Cls10)
+    alpha = (CLd - Cls0)/(Cls10-Cls0) * 10
+    CD= CLds**2 / (np.pi * 8.05 * 0.891)
+    CM= Cm_0 + (Cm_10- Cm_0)* alpha
+
+
+    CN = CLds * np.cos(alpha* np.pi/180) +CD * np.sin(alpha* np.pi/180)
+    CT = CLds * np.sin(alpha* np.pi/180) +CD * np.cos(alpha* np.pi/180)
+    return(CN,CM)
+CN, CM =coefficients(Cls_0, Cls_10, 0.5, Cm_0, Cm_10)
+
+def dimensionalize(CN,CT,chords):
+    rho = 1.225
+    v= 225
+    N= CN * 0.5* rho* v**2 * chords
+    T = CT* 0.5 * rho * v ** 2 * chords
+    M = CM * 0.5* rho * v**2 * chords**2
+    return(N,M)
+
+print(dimensionalize(CN,CM,chords))
 #
 # # Functions
 # def interpolate_distributed_load(x, spanwise_positions, distributed_load):

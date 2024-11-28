@@ -32,9 +32,9 @@ def read_xflr_data(file):
     return np.array(data[int(len(data)/2)::])
 
 # Load AVL Data
-xflr_file_0 = "WP4.1/XFLR0.txt"
+xflr_file_0 = "WP4.1/WP4.1/XFLR0.txt"
 xflr_data_0 = read_xflr_data(xflr_file_0)
-xflr_file_10 = "WP4.1/XFLR10"
+xflr_file_10 = "WP4.1/WP4.1/XFLR10"
 xflr_data_10 = read_xflr_data(xflr_file_10)
 
 # Extract Data
@@ -53,11 +53,8 @@ Cm_10 = xflr_data_10[:, 7]
 print(Cm_0)
 
 
-#Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
-#Cls_10 = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
-
-
-
+# Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
+# Cls_10 = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
  # Calculate Distributed Loads
 #L_dist = 0.5 * rho * velocity**2 * Cls_0_interpolated(spanwise_positions) * chords
 #D_dist = 0.5 * rho * velocity**2 * Cd_induced_0 * chords

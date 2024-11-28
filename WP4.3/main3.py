@@ -1,4 +1,3 @@
-import math
 from intersect import intersection
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,8 +16,8 @@ h = 9449.8  # Cruise altitude (m)
 W_newtons = W * 4.44822  # 1 lb = 4.44822 N
 
 # Stall speeds
-Vs = math.sqrt((2 * W_newtons) / (rho * S * Cl_extended))  # Stall speed with flaps extended
-Vs0 = math.sqrt((2 * W_newtons) / (rho * S * Cl_clean))    # Stall speed clean configuration
+Vs = np.sqrt((2 * W_newtons) / (rho * S * Cl_extended))  # Stall speed with flaps extended
+Vs0 = np.sqrt((2 * W_newtons) / (rho * S * Cl_clean))    # Stall speed clean configuration
 
 # Key speeds
 Vc = 256.55  # Cruise speed (m/s)

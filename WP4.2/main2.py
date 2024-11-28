@@ -20,6 +20,7 @@ class WingBox():
         self.rearsparlength: float = rearsparlength
         self.trapezoid = points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
         self.chord: float = chord
+        self.unitcentroid = tuple(centroid_of_quadrilateral(self.trapezoid))
         
         #airfoil
         self.x1 = np.array([0])
@@ -114,7 +115,7 @@ def T(y):
 
 
 class design():
-    def __init__(self, frontsparlength, rearsparlength, hspar_thickness, vspar_thickness, n_stringers, stringer_area,):
+    def __init__(self, frontsparlength, rearsparlength, hspar_thickness, vspar_thickness, n_stringers, stringer_area):
         self.span_positions = np.linspace(0, 27.47721/2 ,100)
         self.rootchord = 5.24140
         self.tipchord = 1.57714
@@ -129,6 +130,7 @@ class design():
 
         for chord_at_span in self.chords_along_span:
             box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
+            # print(box.unitcentroid)
             box.makestringers(self.n_stringers,0.95)
             moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness)
             moi_y: float = MOI_y(box, stringer_area, box.stringers, box.hspar_thickness, vspar_thickness)
@@ -224,7 +226,7 @@ class design():
             plt.show()
 
 # print(box.trapezoid)
-design = design(0.11, 0.09, 0.005, 0.005, 42, 1e-4) #front spar length, rear spar length, stringer area, horizontal spar thickness, vertical spar thickness, number of stringers
+design = design(0.1258, 0.07702, 0.005, 0.005, 22, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
 design.graph()
 
 #box.trapezoid provides the trapezoid points, 

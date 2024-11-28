@@ -29,7 +29,7 @@ def read_avl_data(avl_file):
     return np.array(data[int(len(data)/2)::])
 
 # Load AVL Data
-avl_file = "WP4.1/AVL.txt"
+avl_file = "AVL.txt"
 avl_data = read_avl_data(avl_file)
 
 # Extract Data
@@ -44,9 +44,9 @@ D_dist = 0.5 * rho * velocity**2 * Cds * chords
 N_dist = np.cos(alpha_a) * L_dist + np.sin(alpha_a) * D_dist
 
 # Engine Properties
-engine_position = 10
-engine_weight = 200000
-engine_torque = 10000
+engine_position = 3.9
+engine_weight = 56016.8
+engine_torque = 240000
 
 # Load Factors
 load_factor_positive = 2.5
@@ -67,7 +67,7 @@ def compute_shear_force(x_eval, spanwise_positions, distributed_load, point_load
 
     S_eval = -integral_w
     if x_eval <= point_load_position:
-        S_eval -= point_load
+        S_eval += point_load
 
     return S_eval
 
@@ -93,53 +93,55 @@ def torque_distribution(x_eval, spanwise_positions, distributed_load, torque_pos
     return T_eval
 
 # Compute Results
+spanwise_positions2 = np.linspace(0, np.max(spanwise_positions), 1000)
+
 shear_force_positive = np.array(
     [compute_shear_force(x, spanwise_positions, distributed_load_positive, engine_position, engine_weight)
-     for x in spanwise_positions]
+     for x in spanwise_positions2]
 )
 shear_force_negative = np.array(
     [compute_shear_force(x, spanwise_positions, distributed_load_negative, engine_position, engine_weight)
-     for x in spanwise_positions]
+     for x in spanwise_positions2]
 )
 
 bending_moment_positive = np.array(
-    [bending_moment(x, spanwise_positions, lambda x: interpolate_distributed_load(x, spanwise_positions, shear_force_positive))
-     for x in spanwise_positions]
+    [bending_moment(x, spanwise_positions, lambda x: interpolate_distributed_load(x, spanwise_positions2, shear_force_positive))
+     for x in spanwise_positions2]
 )
 bending_moment_negative = np.array(
-    [bending_moment(x, spanwise_positions, lambda x: interpolate_distributed_load(x, spanwise_positions, shear_force_negative))
-     for x in spanwise_positions]
+    [bending_moment(x, spanwise_positions, lambda x: interpolate_distributed_load(x, spanwise_positions2, shear_force_negative))
+     for x in spanwise_positions2]
 )
 
 torque_positive = np.array(
-    [torque_distribution(x, spanwise_positions, distributed_load_positive, engine_position, engine_torque) for x in spanwise_positions]
+    [torque_distribution(x, spanwise_positions, distributed_load_positive, engine_position, engine_torque) for x in spanwise_positions2]
 )
 torque_negative = np.array(
-    [torque_distribution(x, spanwise_positions, distributed_load_negative, engine_position, engine_torque) for x in spanwise_positions]
+    [torque_distribution(x, spanwise_positions, distributed_load_negative, engine_position, engine_torque) for x in spanwise_positions2]
 )
 
 # Plot Results
 fig, axs = plt.subplots(3, 2, figsize=(15, 12))
 
 # Shear Force
-axs[0, 0].plot(spanwise_positions, shear_force_positive, label="Shear Force (+)", color='blue')
-axs[0, 1].plot(spanwise_positions, shear_force_negative, label="Shear Force (-)", color='red')
+axs[0, 0].plot(spanwise_positions2, shear_force_positive, label="Shear Force (+)", color='blue')
+axs[0, 1].plot(spanwise_positions2, shear_force_negative, label="Shear Force (-)", color='red')
 axs[0, 0].set_title("Positive Load Factor - Shear Force")
 axs[0, 1].set_title("Negative Load Factor - Shear Force")
 axs[0, 0].set_ylabel("Shear Force (N)")
 axs[0, 1].set_ylabel("Shear Force (N)")
 
 # Bending Moment
-axs[1, 0].plot(spanwise_positions, bending_moment_positive, label="Bending Moment (+)", color='blue')
-axs[1, 1].plot(spanwise_positions, bending_moment_negative, label="Bending Moment (-)", color='red')
+axs[1, 0].plot(spanwise_positions2, bending_moment_positive, label="Bending Moment (+)", color='blue')
+axs[1, 1].plot(spanwise_positions2, bending_moment_negative, label="Bending Moment (-)", color='red')
 axs[1, 0].set_title("Positive Load Factor - Bending Moment")
 axs[1, 1].set_title("Negative Load Factor - Bending Moment")
 axs[1, 0].set_ylabel("Bending Moment (Nm)")
 axs[1, 1].set_ylabel("Bending Moment (Nm)")
 
 # Torque
-axs[2, 0].plot(spanwise_positions, torque_positive, label="Torque (+)", color='blue')
-axs[2, 1].plot(spanwise_positions, torque_negative, label="Torque (-)", color='red')
+axs[2, 0].plot(spanwise_positions2, torque_positive, label="Torque (+)", color='blue')
+axs[2, 1].plot(spanwise_positions2, torque_negative, label="Torque (-)", color='red')
 axs[2, 0].set_title("Positive Load Factor - Torque")
 axs[2, 1].set_title("Negative Load Factor - Torque")
 axs[2, 0].set_ylabel("Torque (Nm)")
@@ -152,3 +154,7 @@ for ax in axs.flat:
 
 plt.tight_layout()
 plt.show()
+
+print(torque_positive.shape)
+
+

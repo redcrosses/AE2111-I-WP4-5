@@ -1,3 +1,4 @@
+import numpy as np
 def centroid_of_quadrilateral(points):
     """
     Calculate the centroid of a quadrilateral given its vertices.
@@ -6,7 +7,7 @@ def centroid_of_quadrilateral(points):
     :return: Centroid coordinates (Cx, Cy).
     """
     # Ensure the quadrilateral is closed (last point = first point)
-    points.append(points[0])
+    np.append(points, points[0])
     
     # Calculate area A
     A = 0

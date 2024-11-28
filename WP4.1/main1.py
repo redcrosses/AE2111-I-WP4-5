@@ -98,6 +98,9 @@ def dimensionalize(CN,CT,chords):
     M = CM * 0.5* rho * v**2 * chords**2
     return(N,M)
 
+N,M = dimensionalize(CN,10,chords)
+print(N,M)
+
 def distributed_shear_force(N, z, L, point_loads=None):
     # Integral for the distributed load
     integral, _ = quad(N, z, L)

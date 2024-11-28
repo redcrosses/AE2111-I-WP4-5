@@ -100,7 +100,7 @@ def dimensionalize(CN,CT,chords):
 
 def distributed_shear_force(N, z, L, point_loads=None):
     # Integral for the distributed load
-    integral, _ = quad(w, x, L)
+    integral, _ = quad(N, z, L)
 
     # Contribution from point loads
     point_load_contribution = engine_weight

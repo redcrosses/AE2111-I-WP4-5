@@ -31,16 +31,7 @@ class WingBox():
         self.width: float = self.trapezoid[2,0] - self.trapezoid[1,0] #width between the front and rear spar
         self.thickness: float = skin_thickness
         
-    def draw(self):
-        #wingbox
-        self.wingboxtodisp = self.trapezoid
-        self.wingboxtodisp = np.append(self.trapezoid, [self.trapezoid[0]], axis=0)
-        self.x2,self.y2 = zip(*self.wingboxtodisp)
-        plt.plot(self.stringers[:,0], self.stringers[:,1], "o")
-        plt.plot(self.x1,self.y1)
-        plt.plot(self.x2,self.y2)
-        plt.gca().set_aspect('equal')
-        plt.show()
+        
     def makestringers(self, n, spacing_coeff):
         self.stringers = np.array([[],[]]) #stringer positions array
         self.topline = np.array([list(self.trapezoid[0]), list(self.trapezoid[-1])])
@@ -120,76 +111,110 @@ def T(y):
     return y
 
 
+class design():
+    def __init__(self, frontsparlength, rearsparlength, stringer_area, skin_thickness):
+        self.span_positions = np.linspace(0, 27.47721/2 ,100)
+        self.rootchord = 5.24140
+        self.tipchord = 1.57714
+        self.chords_along_span = np.column_stack((np.interp(self.span_positions, [0, 27.47721/2], [self.rootchord, self.tipchord]), self.span_positions))
+        print(self.chords_along_span)
+        self.bending_displacement: list = []
+        self.torsion: list = []
+        self.moi_x_list: list = []
+        self.moi_y_list: list = []
+        self.boxes = []
 
-def run_design_config(frontsparlength, rearsparlength, stringer_area, skin_thickness):
-    span_positions = np.linspace(0, 27.47721/2 ,100)
-    chords_along_span = np.column_stack((np.interp(span_positions, [0, 27.47721], [5.24140, 1.57714]), span_positions))
-    bending_displacement: list = []
-    torsion: list = []
-    moi_x_list: list = []
-    moi_y_list: list = []
-    boxes = []
+        for chord_at_span in self.chords_along_span:
+            box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], skin_thickness)
+            box.makestringers(30,0.95)
+            moi_x: float = MOI_x(box, stringer_area, box.stringers, box.thickness)
+            moi_y: float = MOI_y(box, stringer_area, box.stringers, box.thickness)
+            j = moi_x + moi_y
+            def dv_dy(y: float): 
+                integral, _ = quad(lambda x: -Mx(x) / E * moi_x, 0, y)
+                #Mx() needs defining
+                return integral
+            def dtheta_dy(y: float):
+                #T() needs defining
+                return T(y) / (G * j)
+            def v(y):
+                integral, _ = quad(lambda x: dv_dy(x), 0, y)
+                return integral
+            def theta(y):
+                integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
+                return integral
+            self.bending_displacement.append(v(chord_at_span[1]))
+            self.torsion.append(theta(chord_at_span[1]))
+            self.moi_x_list.append(moi_x)
+            self.moi_y_list.append(moi_y)
+            if chord_at_span[0] == self.chords_along_span[0,0] or chord_at_span[0] == self.chords_along_span[-1,0]:
+                self.boxes.append(box)
+        # print(self.boxes[])
+            
+    def graph(self):
+            fig1 = plt.figure()
+            # print(self.boxes[0].trapezoid)
+            # print(self.boxes[1].trapezoid)
+            trapezoids_sized = np.vstack([self.boxes[0].trapezoid, self.boxes[1].trapezoid])
+            # print(trapezoids_sized)
+            #vvv first subplot vvv
+            ax = fig1.add_subplot(1,2,1, projection='3d')
+            ax.set(xlim3d=[0,15], ylim3d=[0,3], zlim3d=[0,30], box_aspect=(3, 3/5, 6))
+            self.sweep = np.radians(25)
+            # #airfoil
+            airfoil = np.empty([1,2])
+            data = np.loadtxt("WP4.2/fx60126.dat")
+            airfoil_x = data[:,0]
+            airfoil_y = data[:,1]
+            airfoil_z = np.zeros(airfoil_x.shape)
 
-    for chord_at_span in chords_along_span:
-        box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], skin_thickness)
-        box.makestringers(30,0.95)
-        moi_x: float = MOI_x(box, stringer_area, box.stringers, box.thickness)
-        moi_y: float = MOI_y(box, stringer_area, box.stringers, box.thickness)
-        j = moi_x + moi_y
-        def dv_dy(y: float): 
-            integral, _ = quad(lambda x: -Mx(x) / E * moi_x, 0, y)
-            #Mx() needs defining
-            return integral
-        def dtheta_dy(y: float):
-            #T() needs defining
-            return T(y) / (G * j)
-        def v(y):
-            integral, _ = quad(lambda x: dv_dy(x), 0, y)
-            return integral
-        def theta(y):
-            integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
-            return integral
-        bending_displacement.append(v(chord_at_span[1]))
-        torsion.append(theta(chord_at_span[1]))
-        moi_x_list.append(moi_x)
-        moi_y_list.append(moi_y)
-        if chord_at_span[0] == chords_along_span[0,0] or chord_at_span[0] == chords_along_span[-1,0]:
-            boxes.append(box)
-    return bending_displacement, torsion, moi_x_list, moi_y_list, span_positions, boxes
+            airfoil_x = np.vstack([airfoil_x*self.rootchord, airfoil_x*self.tipchord + 27.47721*np.sin(self.sweep)])
+            airfoil_y = np.vstack([airfoil_y*self.rootchord, airfoil_y*self.tipchord])
+            airfoil_z = np.vstack([airfoil_z, np.full_like(airfoil_z, 27.47721)])
 
-#draw/have the geomerty of a wing box 
-box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
-box.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
-box.draw()
-print(box.trapezoid)
-bending_displacement, torsion, moi_x_list, moi_y_list, span_positions, boxes = run_design_config(0.11, 0.09, 0, 0.001)
-print(boxes)
-fig, axs = plt.subplots(2, 2, figsize=(15, 12))
+            x,y = trapezoids_sized[:4,0], trapezoids_sized[:4,1]
+            z = np.zeros(x.shape) #every four points in trapezoid_sized is one trapezoid box
 
-# MOI
-axs[0, 0].plot(span_positions, moi_x_list, label="Second moment of inertia", color='blue')
-axs[0, 1].plot(span_positions, moi_y_list, label="Second moment of inertia", color='red')
-axs[0, 0].set_title("Spanwise second moment of inertia in x-axis")
-axs[0, 1].set_title("Spanwise second moment of inertia in x-axis")
-axs[0, 0].set_ylabel("MOI_xx (m^4)")
-axs[0, 1].set_ylabel("MOI_yy (m^4)")
+            x = np.vstack([x, trapezoids_sized[4:,0] + np.sin(self.sweep)*27.47721]) 
+            y = np.vstack([y, trapezoids_sized[4:,1]]) #close enough for now but it's wrong lol
+            z = np.vstack([z, np.full_like(z,27.47721)])
+            print(x,y,x.shape)
 
-# Displacements
-axs[1, 0].plot(span_positions, bending_displacement, label="Bending displacement", color='blue')
-axs[1, 1].plot(span_positions, torsion, label="Torsional twist", color='red')
-axs[1, 0].set_title("Spanwise variation of bending displacement")
-axs[1, 1].set_title("Spanwise variation of torsional twist")
-axs[1, 0].set_ylabel("Bending displacement (m)")
-axs[1, 1].set_ylabel("Torsional twist (rad)")
+            airfoil = ax.plot_surface(airfoil_x, airfoil_y, airfoil_z, linewidth=0, alpha=0.25)
+            surface = ax.plot_surface(x, y, z, alpha=1, linewidth=0,antialiased=False)
 
-for ax in axs.flat:
-    ax.set_xlabel("Spanwise Position (m)")
-    ax.legend()
-    ax.grid()
+            # #vvv second subplot vvv idk deflections or other graphs
+            # fig2 = plt.figure()
+            # axs = fig2.add_subplot(2, 2, figsize=(15, 12))
+            # axs = fig2.add_subplot(1,2,2)
+            
+            # # MOI
+            # axs[0, 0].plot(self.span_positions, self.moi_x_list, label="Second moment of inertia", color='blue')
+            # axs[0, 1].plot(self.span_positions, self.moi_y_list, label="Second moment of inertia", color='red')
+            # axs[0, 0].set_title("Spanwise second moment of inertia in x-axis")
+            # axs[0, 1].set_title("Spanwise second moment of inertia in x-axis")
+            # axs[0, 0].set_ylabel("MOI_xx (m^4)")
+            # axs[0, 1].set_ylabel("MOI_yy (m^4)")
 
-plt.tight_layout()
-plt.show()
+            # # Displacements
+            # axs[1, 0].plot(self.span_positions, self.bending_displacement, label="Bending displacement", color='blue')
+            # axs[1, 1].plot(self.span_positions, self.torsion, label="Torsional twist", color='red')
+            # axs[1, 0].set_title("Spanwise variation of bending displacement")
+            # axs[1, 1].set_title("Spanwise variation of torsional twist")
+            # axs[1, 0].set_ylabel("Bending displacement (m)")
+            # axs[1, 1].set_ylabel("Torsional twist (rad)")
 
+            # for ax in axs.flat:
+            #     ax.set_xlabel("Spanwise Position (m)")
+            #     ax.legend()
+            #     ax.grid()
+
+            fig1.tight_layout()
+            plt.show()
+
+# print(box.trapezoid)
+design = design(0.11, 0.09, 0, 0.001)
+design.graph()
 
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length

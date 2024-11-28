@@ -78,14 +78,16 @@ distributed_load_negative = N_dist * load_factor_negative
 
 
 def coefficients(Cls0, Cls10, CLd ):
-    CLds=Cls0
-    for element in range(Cls0.shape[0]):
-        CLds[element] = Cls0[element] + (CLd- Cls0[element])/(Cls10[element]- Cls0[element]) * ( Cls0[element]- Cls10[element])
 
-    return(CLds)
+    CLds = Cls0 + (CLd- Cls0)/(Cls10- Cls0) * ( Cls0- Cls10)
+    alpha = (CLd - Cls0)/(Cls10-Cls0) * 10
+    CD= CLds**2 / (np.pi * 8.05 * 0.891)
 
-print(Cls)
-print(coefficients(Cls, Cls10, 0))
+
+    CN = CLds * np.cos(alpha* np.pi/180) +CD * np.sin(alpha* np.pi/180)
+    CT = CLds * np.sin(alpha* np.pi/180) +CD * np.cos(alpha* np.pi/180)
+    return(CN,CT)
+
 #
 # # Functions
 # def interpolate_distributed_load(x, spanwise_positions, distributed_load):

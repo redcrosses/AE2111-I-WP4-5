@@ -30,13 +30,18 @@ def read_avl_data(avl_file):
 
 # Load AVL Data
 avl_file = "AVL.txt"
+avl10_file = "AVL10.txt"
 avl_data = read_avl_data(avl_file)
+avl10_data = read_avl_data(avl10_file)
 
 # Extract Data
 spanwise_positions = avl_data[:, 0]
 chords = avl_data[:, 1]
 Cls = avl_data[:, 3]
+Cls10= avl10_data[:, 3]
 Cds = avl_data[:, 5]
+Cm0 = avl_data[:, 6]
+Cm10 = avl10_data[:, 6]
 
 # Calculate Distributed Loads
 L_dist = 0.5 * rho * velocity**2 * Cls * chords
@@ -58,6 +63,23 @@ distributed_load_negative = N_dist * load_factor_negative
 # Functions
 def interpolate_distributed_load(x, spanwise_positions, distributed_load):
     return np.interp(x, spanwise_positions, distributed_load)
+
+def coefficients(Cls0, Cls10, CLd ):
+    CLds=Cls0
+    for element in range(Cls0.shape[0]):
+        CLds[element] = Cls0[element] + (CLd- Cls0[element])/(Cls10[element]- Cls0[element]) * ( Cls0[element]- Cls10[element])
+
+
+
+
+    return(CLds)
+
+print(Cls)
+print(coefficients(Cls, Cls10, 0))
+
+
+
+lift_coefficient(Cls, Cls10, 0.5)
 
 def compute_shear_force(x_eval, spanwise_positions, distributed_load, point_load_position, point_load):
     def distributed_load_function(x):

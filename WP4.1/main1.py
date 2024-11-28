@@ -53,8 +53,8 @@ Cm_10 = xflr_data_10[:, 7]
 print(Cm_0)
 
 
-Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
-Cls_10 = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
+#Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
+#Cls_10 = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
 
 
 
@@ -98,7 +98,6 @@ def dimensionalize(CN,CT,chords):
     M = CM * 0.5* rho * v**2 * chords**2
     return(N,M)
 
-print(dimensionalize(CN,CM,chords))
 #
 # # Functions
 # def interpolate_distributed_load(x, spanwise_positions, distributed_load):

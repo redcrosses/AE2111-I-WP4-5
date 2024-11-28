@@ -62,11 +62,6 @@ class WingBox():
         self.stringers = self.stringers.transpose()
         # print(self.stringers)
         pass
-    
-    def centroid(self):
-        pass
-    def secondmomentarea(self):
-        pass
 
 def MOI_x(box, stringer_area: float, stringer_positions, thickness: float) -> float:
     wingbox = box.trapezoid
@@ -88,7 +83,7 @@ def MOI_x(box, stringer_area: float, stringer_positions, thickness: float) -> fl
     I_stringers = sum([stringer_area*((pos[1]-centroid[1]))**2 for pos in stringer_positions])
     return I_xx_1 + I_xx_2 + I_xx_3 + I_xx_4 + I_stringers
 
-def MOI_y(box, stringer_area: float, stringer_positions, thickness: float) -> float:
+def MOI_y(box:object, stringer_area: float, stringer_positions, thickness: float) -> float:
     wingbox = box.trapezoid
     centroid: float = tuple(centroid_of_quadrilateral(wingbox))
     beta: float = np.arctan(abs(wingbox[3,1]-wingbox[0,1])/box.width) #slant angle of top side
@@ -119,43 +114,80 @@ def Mx(y):
     #WP4.1
     return y
 
-def EI_xx_compute(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float) -> float: 
-    I_xx = MOI_x(wingbox, stringer_area, stringer_positions, y, thickness)
-    EI_xx = E * I_xx
-    return EI_xx
 
 def T(y): 
     #WP4.1
     return y
 
-def GJ(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float) -> float:
-    J = J(wingbox, stringer_area, stringer_positions, y, thickness)
-    return G * J
 
-#deflection functions
 
-def dv_dy(y): 
-    integral, _ = quad(lambda x: -Mx(x) / EI_xx_compute(x), 0, y)
-    return integral
+def run_design_config(frontsparlength, rearsparlength, stringer_area, skin_thickness):
+    span_positions = np.linspace(0, 27.47721/2 ,100)
+    chords_along_span = np.column_stack((np.interp(span_positions, [0, 27.47721], [5.24140, 1.57714]), span_positions))
+    bending_displacement: list = []
+    torsion: list = []
+    moi_x_list: list = []
+    moi_y_list: list = []
 
-def v(y):
-    integral, _ = quad(lambda x: dv_dy(x), 0, y)
-    return integral
-
-def dtheta_dy(y):
-    return T(y) / GJ(y)
-
-def theta(y):
-    integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
-    return integral
+    for chord_at_span in chords_along_span:
+        box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], skin_thickness)
+        box.makestringers(30,0.95)
+        moi_x: float = MOI_x(box, stringer_area, box.stringers, box.thickness)
+        moi_y: float = MOI_y(box, stringer_area, box.stringers, box.thickness)
+        j = moi_x + moi_y
+        def dv_dy(y: float): 
+            integral, _ = quad(lambda x: -Mx(x) / E * moi_x, 0, y)
+            #Mx() needs defining
+            return integral
+        def dtheta_dy(y: float):
+            #T() needs defining
+            return T(y) / (G * j)
+        def v(y):
+            integral, _ = quad(lambda x: dv_dy(x), 0, y)
+            return integral
+        def theta(y):
+            integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
+            return integral
+        bending_displacement.append(v(chord_at_span[1]))
+        torsion.append(theta(chord_at_span[1]))
+        moi_x_list.append(moi_x)
+        moi_y_list.append(moi_y)
+    return bending_displacement, torsion, moi_x_list, moi_y_list, span_positions
 
 #draw/have the geomerty of a wing box 
 box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
 box.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
 box.draw()
 print(box.trapezoid)
-box.MOI_x = MOI_x(box, 0, box.stringers, box.thickness)
-box.MOI_y = MOI_y(box, 0, box.stringers, box.thickness)
+bending_displacement, torsion, moi_x_list, moi_y_list, span_positions = run_design_config(0.11, 0.09, 0, 0.001)
+
+fig, axs = plt.subplots(2, 2, figsize=(15, 12))
+
+# MOI
+axs[0, 0].plot(span_positions, moi_x_list, label="Second moment of inertia", color='blue')
+axs[0, 1].plot(span_positions, moi_y_list, label="Second moment of inertia", color='red')
+axs[0, 0].set_title("Spanwise second moment of inertia in x-axis")
+axs[0, 1].set_title("Spanwise second moment of inertia in x-axis")
+axs[0, 0].set_ylabel("MOI_xx (m^4)")
+axs[0, 1].set_ylabel("MOI_yy (m^4)")
+
+# Displacements
+axs[1, 0].plot(span_positions, bending_displacement, label="Bending displacement", color='blue')
+axs[1, 1].plot(span_positions, torsion, label="Torsional twist", color='red')
+axs[1, 0].set_title("Spanwise variation of bending displacement")
+axs[1, 1].set_title("Spanwise variation of torsional twist")
+axs[1, 0].set_ylabel("Bending displacement (m)")
+axs[1, 1].set_ylabel("Torsional twist (rad)")
+
+for ax in axs.flat:
+    ax.set_xlabel("Spanwise Position (m)")
+    ax.legend()
+    ax.grid()
+
+plt.tight_layout()
+plt.show()
+
+
 #box.trapezoid provides the trapezoid points, 
 #box.frontsparlength provides the front spar length
 #box.rearsparlength provides the rear spar length

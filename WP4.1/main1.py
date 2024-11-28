@@ -77,7 +77,7 @@ distributed_load_positive = N_dist * load_factor_positive
 distributed_load_negative = N_dist * load_factor_negative
 
 
-def coefficients(Cls0, Cls10, CLd ):
+def coefficients(Cls0, Cls10, CLd, ):
 
     CLds = Cls0 + (CLd- Cls0)/(Cls10- Cls0) * ( Cls0- Cls10)
     alpha = (CLd - Cls0)/(Cls10-Cls0) * 10
@@ -87,6 +87,11 @@ def coefficients(Cls0, Cls10, CLd ):
     CN = CLds * np.cos(alpha* np.pi/180) +CD * np.sin(alpha* np.pi/180)
     CT = CLds * np.sin(alpha* np.pi/180) +CD * np.cos(alpha* np.pi/180)
     return(CN,CT)
+
+def dimensionalize(CN,CT)
+    N= CN * 0.5* rho* v**2 * chords
+    T = CT* 0.5 * rho * v ** 2 * chords
+    return(N,T)
 
 #
 # # Functions

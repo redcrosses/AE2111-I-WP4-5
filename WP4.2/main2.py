@@ -121,7 +121,7 @@ def T(y):
 
 
 
-def run_design_config(wingbox_design: object, stringer_area):
+def run_design_config(frontsparlength, rearsparlength, stringer_area, skin_thickness):
     span_positions = np.linspace(0, 27.47721 ,100)
     chords_along_span = np.column_stack((np.interp(span_positions, [0, 27.47721], [5.24140, 1.57714]), span_positions))
     bending_displacement: list = []
@@ -130,7 +130,8 @@ def run_design_config(wingbox_design: object, stringer_area):
     moi_y_list: list = []
 
     for chord_at_span in chords_along_span:
-        box: object = wingbox_design
+        box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], skin_thickness)
+        box.makestringers(30,0.95)
         moi_x: float = MOI_x(box, stringer_area, box.stringers, box.thickness)
         moi_y: float = MOI_y(box, stringer_area, box.stringers, box.thickness)
         j = moi_x + moi_y
@@ -147,8 +148,8 @@ def run_design_config(wingbox_design: object, stringer_area):
         def theta(y):
             integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
             return integral
-        bending_displacement.append(v(chord_at_span[0]))
-        torsion.append(theta(chord_at_span[0]))
+        bending_displacement.append(v(chord_at_span[1]))
+        torsion.append(theta(chord_at_span[1]))
         moi_x_list.append(moi_x)
         moi_y_list.append(moi_y)
     return bending_displacement, torsion, moi_x_list, moi_y_list, span_positions
@@ -158,7 +159,7 @@ box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the posit
 box.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
 box.draw()
 print(box.trapezoid)
-bending_displacement, torsion, moi_x_list, moi_y_list, span_positions = run_design_config(box, 0)
+bending_displacement, torsion, moi_x_list, moi_y_list, span_positions = run_design_config(0.11, 0.09, 0, 0.001)
 
 fig, axs = plt.subplots(2, 2, figsize=(15, 12))
 

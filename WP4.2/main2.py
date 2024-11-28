@@ -128,6 +128,7 @@ def run_design_config(frontsparlength, rearsparlength, stringer_area, skin_thick
     torsion: list = []
     moi_x_list: list = []
     moi_y_list: list = []
+    boxes = []
 
     for chord_at_span in chords_along_span:
         box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], skin_thickness)
@@ -152,15 +153,17 @@ def run_design_config(frontsparlength, rearsparlength, stringer_area, skin_thick
         torsion.append(theta(chord_at_span[1]))
         moi_x_list.append(moi_x)
         moi_y_list.append(moi_y)
-    return bending_displacement, torsion, moi_x_list, moi_y_list, span_positions
+        if chord_at_span[0] == chords_along_span[0,0] or chord_at_span[0] == chords_along_span[-1,0]:
+            boxes.append(box)
+    return bending_displacement, torsion, moi_x_list, moi_y_list, span_positions, boxes
 
 #draw/have the geomerty of a wing box 
 box = WingBox(0.11,0.09, 2, 0.001) #frontspar LENGTH, rearspar LENGTH (the positions of the spars are calculated in code to fit into the airfoil)
 box.makestringers(30,0.95) #number of stringers, how much of wingbox to cover in percent
 box.draw()
 print(box.trapezoid)
-bending_displacement, torsion, moi_x_list, moi_y_list, span_positions = run_design_config(0.11, 0.09, 0, 0.001)
-
+bending_displacement, torsion, moi_x_list, moi_y_list, span_positions, boxes = run_design_config(0.11, 0.09, 0, 0.001)
+print(boxes)
 fig, axs = plt.subplots(2, 2, figsize=(15, 12))
 
 # MOI

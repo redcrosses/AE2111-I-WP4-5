@@ -40,8 +40,8 @@ chords = avl_data[:, 1]
 Cls = avl_data[:, 3]
 Cls10= avl10_data[:, 3]
 Cds = avl_data[:, 5]
-Cm0 = avl_data[:, 6]
-Cm10 = avl10_data[:, 6]
+Cm0 = avl_data[:, 7]
+Cm10 = avl10_data[:, 7]
 
 # Calculate Distributed Loads
 L_dist = 0.5 * rho * velocity**2 * Cls * chords

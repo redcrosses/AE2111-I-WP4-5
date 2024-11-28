@@ -24,8 +24,8 @@ def read_xflr_data(file):
                 break
             if data_start:
                 try:
-                    values = list(map(float, line.split()[:6]))
-                    if len(values) == 6:
+                    values = list(map(float, line.split()[:8]))
+                    if len(values) == 8:
                         data.append(values)
                 except ValueError:
                     continue
@@ -47,9 +47,12 @@ Cd_induced_0 = xflr_data_0[:, 5]
 Cls_10 = xflr_data_10[:, 3]
 Cd_induced_10 = xflr_data_10[:, 5]
 
-Cm_0 = xflr_data_0[:, 9]
-Cm_10 = xflr_data_10[:, 9]
+
+Cm_0 = xflr_data_0[:, 7]
+Cm_10 = xflr_data_10[:, 7]
 print(Cm_0)
+
+
 Cls_0_interpolated = sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
 Cls_10_interpolated = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
 
@@ -72,6 +75,17 @@ load_factor_negative = -1.5
 
 distributed_load_positive = N_dist * load_factor_positive
 distributed_load_negative = N_dist * load_factor_negative
+
+
+def coefficients(Cls0, Cls10, CLd ):
+    CLds=Cls0
+    for element in range(Cls0.shape[0]):
+        CLds[element] = Cls0[element] + (CLd- Cls0[element])/(Cls10[element]- Cls0[element]) * ( Cls0[element]- Cls10[element])
+
+    return(CLds)
+
+print(Cls)
+print(coefficients(Cls, Cls10, 0))
 #
 # # Functions
 # def interpolate_distributed_load(x, spanwise_positions, distributed_load):

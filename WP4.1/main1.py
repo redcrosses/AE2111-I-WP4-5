@@ -50,7 +50,6 @@ Cd_induced_10 = xflr_data_10[:, 5]
 
 Cm_0 = xflr_data_0[:, 7]
 Cm_10 = xflr_data_10[:, 7]
-print(Cm_0)
 
 
 #Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
@@ -92,32 +91,47 @@ CN, CM =coefficients(Cls_0, Cls_10, 0.5, Cm_0, Cm_10)
 
 def dimensionalize(CN,CT,chords):
     rho = 1.225
-    v= 225
+    v = 225  #[m/s]
     N= CN * 0.5* rho* v**2 * chords
     T = CT* 0.5 * rho * v ** 2 * chords
     M = CM * 0.5* rho * v**2 * chords**2
     return(N,M)
 
 N,M = dimensionalize(CN,10,chords)
-print(N,M)
-
-def distributed_shear_force(N, z, L, point_loads=None):
-    # Integral for the distributed load
-    integral, _ = quad(N, z, L)
-
-    # Contribution from point loads
-    point_load_contribution = engine_weight
-    if point_loads:
-        for P, z_p in point_loads:
-            if x <= z_p <= L:  # Include point load contributions only if they are within x and L
-                point_load_contribution += P
-
-    # Shear force at x
-    S_x = -integral - point_load_contribution
-    return S_x
 
 
+def distributed_shear_force(normal, positions, point_loads):
+    """
+    Compute distributed shear force over a span of positions.
+    
+    Parameters:
+        normal: Array or function of the distributed normal force
+        positions: Array of spanwise positions
+        lift: Total lift force to integrate up to
+        point_loads: List of tuples (force, position) for discrete loads
+    
+    Returns:
+        Shear force distribution as an array corresponding to `positions`.
+    """
+    shear_force = []
+    for i, x in enumerate(positions):
+        # Integral for distributed normal force from the current position
+        integral, _ = quad(normal, x, max(spanwise_positions))
 
+        # Contribution from point loads
+        point_load_contribution = engine_weight
+        if point_loads:
+            for P, z_p in point_loads:
+                if z_p >= x:  # Only include point loads outboard of x``
+                    point_load_contribution += P
+
+        # Shear force at current position
+        S_x = -integral - point_load_contribution
+        shear_force.append(S_x)
+    return np.array(shear_force)
+
+plt.plot(spanwise_positions, CN)
+plt.show
 
 #
 # # Functions

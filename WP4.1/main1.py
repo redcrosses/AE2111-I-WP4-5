@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 from scipy.integrate import quad
 import scipy as sp
 from scipy import interpolate
+from scipy.interpolate import interp1d
+
+
+
 # Constants
 V = 10 # [m/s]
 q = 0.5 * 1.225 * V**2
@@ -67,6 +71,7 @@ Cm_10 = xflr_data_10[:, 7]
 engine_position = 3.9 # [m]
 engine_weight = 2858 * 9.80665 #[N]
 engine_torque = 240000  #[Nm]
+point_loads = [(engine_weight, engine_position)]
 
 # Load Factors
 load_factor_positive = 2.5
@@ -100,29 +105,21 @@ def dimensionalize(CN,CT,chords):
 N,M = dimensionalize(CN,10,chords)
 
 
-def distributed_shear_force(normal, positions, point_loads):
-    """
-    Compute distributed shear force over a span of positions.
-    
-    Parameters:
-        normal: Array or function of the distributed normal force
-        positions: Array of spanwise positions
-        lift: Total lift force to integrate up to
-        point_loads: List of tuples (force, position) for discrete loads
-    
-    Returns:
-        Shear force distribution as an array corresponding to `positions`.
-    """
+moment_func = interp1d(spanwise_positions, M, kind = 'cubic', fill_value= 'extrapolate')
+normal_func = interp1d(spanwise_positions, N, kind='cubic', fill_value="extrapolate")
+
+
+def distributed_shear_force(normal_func, positions, point_loads):
     shear_force = []
     for i, x in enumerate(positions):
         # Integral for distributed normal force from the current position
-        integral, _ = quad(normal, x, max(spanwise_positions))
+        integral, _ = quad(normal_func, x, max(positions))  # Use positions passed to the function
 
         # Contribution from point loads
-        point_load_contribution = engine_weight
+        point_load_contribution = 0  # Start from zero
         if point_loads:
             for P, z_p in point_loads:
-                if z_p >= x:  # Only include point loads outboard of x``
+                if z_p >= x:  # Include only loads outboard of the current position
                     point_load_contribution += P
 
         # Shear force at current position
@@ -130,8 +127,29 @@ def distributed_shear_force(normal, positions, point_loads):
         shear_force.append(S_x)
     return np.array(shear_force)
 
-plt.plot(spanwise_positions, CN)
-plt.show
+shear_array = distributed_shear_force(N, spanwise_positions, point_loads)
+reaction_moment = shear_array[1]
+print(reaction_moment)
+def distributed_bending_moment(normal_func, positions, point_loads):
+    bending_moment = []
+    for i, x in enumerate(positions):
+        # Integral for distributed normal force from the current position
+        integral, _ = quad(moment_func, x, max(positions))  # Use positions passed to the function
+
+        # Contribution from point loads
+        point_load_contribution = 0  # Start from zero
+        if point_loads:
+            for P, z_p in point_loads:
+                if z_p >= x:  # Include only loads outboard of the current position
+                    point_load_contribution += P
+
+        # Shear force at current position
+        S_x = -integral - point_load_contribution
+        shear_force.append(S_x)
+    return np.array(shear_force)
+
+
+
 
 #
 # # Functions

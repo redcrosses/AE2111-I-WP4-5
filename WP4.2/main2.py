@@ -160,7 +160,8 @@ class design():
             fig = plt.figure(figsize=(15, 10))
             gs = GridSpec(2, 3, figure=fig, width_ratios=[2, 1, 1], height_ratios=[1, 1])            # print(self.boxes[0].trapezoid)
             # print(self.boxes[1].trapezoid)
-            trapezoids_sized = np.vstack([self.boxes[0].trapezoid, self.boxes[1].trapezoid])
+            trapezoids_sized = np.vstack([np.append(self.boxes[0].trapezoid, [self.boxes[0].trapezoid[0]], axis=0), 
+                                          np.append(self.boxes[1].trapezoid, [self.boxes[1].trapezoid[0]], axis=0)])
             # print(trapezoids_sized)
             #vvv first subplot vvv
             ax3d = fig.add_subplot(1, 3, 1, projection='3d')  # First column
@@ -178,11 +179,11 @@ class design():
             airfoil_y = np.vstack([airfoil_y*self.rootchord, airfoil_y*self.tipchord])
             airfoil_z = np.vstack([airfoil_z, np.full_like(airfoil_z, 27.47721)])
 
-            x,y = trapezoids_sized[:4,0], trapezoids_sized[:4,1]
+            x,y = trapezoids_sized[:5,0], trapezoids_sized[:5,1]
             z = np.zeros(x.shape) #every four points in trapezoid_sized is one trapezoid box
 
-            x = np.vstack([x, trapezoids_sized[4:,0] + np.sin(self.sweep)*27.47721]) 
-            y = np.vstack([y, trapezoids_sized[4:,1]]) #close enough for now but it's wrong lol
+            x = np.vstack([x, trapezoids_sized[5:,0] + np.sin(self.sweep)*27.47721]) 
+            y = np.vstack([y, trapezoids_sized[5:,1]]) #close enough for now but it's wrong lol
             z = np.vstack([z, np.full_like(z,27.47721)])
             # print(x,y,x.shape)
 

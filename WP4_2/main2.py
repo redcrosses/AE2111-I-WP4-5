@@ -1,4 +1,4 @@
-def main2(loads_1: list, span_pos: list):
+def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, where the first element is positive loads, second element is negative loads
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
@@ -6,14 +6,15 @@ def main2(loads_1: list, span_pos: list):
     from scipy.integrate import quad
     from WP4_2.centroid import centroid_of_quadrilateral
     import WP4_2.points_intersection
+    from alive_progress import alive_bar
 
     #Constraints
     #- The wing tip displacement should not exceed 15% of the total span of the wing.
     #- The wing tip rotation should not exceed +/- 10°.
 
     #CONSTANTS <3
-    E = 72.4 * 10**9
-    G = 27 * 10**9
+    E = 72.4 * 10**9 #elastic modulus
+    G = 27 * 10**9 #shear modulus
 
     class WingBox():
         def __init__(self, frontsparlength, rearsparlength, chord, hspar_thickness, vspar_thickness):
@@ -98,73 +99,67 @@ def main2(loads_1: list, span_pos: list):
         I_stringers = sum([stringer_area*((pos[0]-centroid[0]))**2 for pos in stringer_positions])
         return I_yy_1 + I_yy_2 + I_yy_3 + I_yy_4 + I_stringers
 
-    def J(wingbox: list[tuple], stringer_area: float, stringer_positions: list[tuple], y: float, thickness: float, chord) -> float:
-        moi_x = MOI_x(wingbox, stringer_area, stringer_positions, y, thickness, chord)
-        moi_y = MOI_y(wingbox, stringer_area, stringer_positions, y, thickness, chord)
-        return moi_x + moi_y
-
-    #compute deflection profiles of the wing (app.D.2)
-
-    def Mx(y): 
-        return np.interp(y, span_pos, loads_1[1], 0)
-
-
-
-    def T(y): 
-        return np.interp(y, span_pos, loads_1[2], 0)
-
-
     class design():
         def __init__(self, frontsparlength, rearsparlength, hspar_thickness, vspar_thickness, n_stringers, stringer_area):
-            self.span_positions = np.linspace(0, 27.47721/2 ,100)
+            self.span_positions = np.linspace(0, 27.47721/2, 100)
             self.rootchord = 5.24140
             self.tipchord = 1.57714
             self.chords_along_span = np.column_stack((np.interp(self.span_positions, [0, 27.47721/2], [self.rootchord, self.tipchord]), self.span_positions))
-            # print(self.chords_along_span)
             self.n_stringers = n_stringers
-            self.bending_displacement: list = []
-            self.torsion: list = []
-            self.moi_x_list: list = []
-            self.moi_y_list: list = []
-            self.boxes = []
+            self.displacements = []
+            #loadings found from diagrams
+            with alive_bar(self.span_positions.shape[0]*2) as bar:
+                for i in range(len(loads)):
+                    self.boxes = []
+                    bending_displacement: list = []
+                    torsion: list = []
+                    self.moi_x_list: list = []
+                    self.moi_y_list: list = []
+                    print("Load for ", n_tuple[i])
+                    def Mx(y): 
+                        return np.interp(y, span_pos, loads[i][1], 0)
 
-            for chord_at_span in self.chords_along_span:
-                box: object = WingBox(frontsparlength,rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
-                # print(box.unitcentroid)
-                box.makestringers(self.n_stringers,0.95)
-                moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness)
-                moi_y: float = MOI_y(box, stringer_area, box.stringers, box.hspar_thickness, vspar_thickness)
-                j = moi_x + moi_y
-                def dv_dy(y: float): 
-                    integral, _ = quad(lambda x: -Mx(x) / E * moi_x, 0, y)
-                    #Mx() needs defining
-                    return integral
-                def dtheta_dy(y: float):
-                    #T() needs defining
-                    return T(y) / (G * j)
-                def v(y):
-                    integral, _ = quad(lambda x: dv_dy(x), 0, y)
-                    return integral
-                def theta(y):
-                    integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
-                    return integral
-                self.bending_displacement.append(v(chord_at_span[1]))
-                self.torsion.append(theta(chord_at_span[1]))
-                self.moi_x_list.append(moi_x)
-                self.moi_y_list.append(moi_y)
-                if chord_at_span[0] == self.chords_along_span[0,0] or chord_at_span[0] == self.chords_along_span[-1,0]:
-                    self.boxes.append(box)
+                    def T(y): 
+                        return np.interp(y, span_pos, loads[i][2], 0)
+                    
+                    for chord_at_span in self.chords_along_span:
+                        box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
+                        # print(box.unitcentroid)
+                        box.makestringers(self.n_stringers,0.95)
+                        moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness)
+                        moi_y: float = MOI_y(box, stringer_area, box.stringers, box.hspar_thickness, vspar_thickness)
+                        j = moi_x + moi_y
+                        def dv_dy(y: float): 
+                            integral, _ = quad(lambda x: -Mx(x) / (E * moi_x), 0, y)
+                            #Mx() needs defining
+                            return integral
+                        def dtheta_dy(y: float):
+                            #T() needs defining
+                            return T(y) / (G * j)
+                        def v(y):
+                            integral, _ = quad(lambda x: dv_dy(x), 0, y)
+                            return integral
+                        def theta(y):
+                            integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
+                            return integral
+                        bending_displacement.append(v(chord_at_span[1]))
+                        torsion.append(theta(chord_at_span[1]))
+                        self.moi_x_list.append(moi_x)
+                        self.moi_y_list.append(moi_y)
+                        if chord_at_span[0] == self.chords_along_span[0,0] or chord_at_span[0] == self.chords_along_span[-1,0]:
+                            self.boxes.append(box)
+                        bar()
+                    self.displacements.append([bending_displacement, torsion]) #displacement first, torsion second
             # print(self.boxes[])
-                
+            # print(self.displacements)
         def graph(self):
-                fig = plt.figure(figsize=(15, 10))
-                gs = GridSpec(2, 3, figure=fig, width_ratios=[2, 1, 1], height_ratios=[1, 1])            # print(self.boxes[0].trapezoid)
+                fig1 = plt.figure(figsize=(7, 10))
                 # print(self.boxes[1].trapezoid)
                 trapezoids_sized = np.vstack([np.append(self.boxes[0].trapezoid, [self.boxes[0].trapezoid[0]], axis=0), 
                                             np.append(self.boxes[1].trapezoid, [self.boxes[1].trapezoid[0]], axis=0)])
                 # print(trapezoids_sized)
                 #vvv first subplot vvv
-                ax3d = fig.add_subplot(1, 3, 1, projection='3d')  # First column
+                ax3d = fig1.add_subplot(1, 1, 1, projection='3d')  # First column
                 ax3d.set(xlim3d=[0, 15], ylim3d=[0, 3], zlim3d=[0, 30], box_aspect=(3, 3/5, 6))
 
                 self.sweep = np.radians(25)
@@ -190,40 +185,44 @@ def main2(loads_1: list, span_pos: list):
                 airfoil = ax3d.plot_surface(airfoil_x, airfoil_y, airfoil_z, linewidth=0, alpha=0.25)
                 surface = ax3d.plot_surface(x, y, z, alpha=1, linewidth=0,antialiased=False)
 
-                # #vvv second subplot vvv idk deflections or other graphs
-                
+                fig1.tight_layout()
+                plt.show(block = False)
+
+                # #vvv second subplot vvv
+                fig2 = plt.figure(figsize=(15,10))
+                gs = GridSpec(2, 3, figure=fig2, width_ratios=[1, 2, 2], height_ratios=[1, 1])            # print(self.boxes[0].trapezoid)
                 # Spanwise second moment of inertia (2D plots)
-                ax_moi_x = fig.add_subplot(gs[0, 1])  # Top row, second column
+                ax_moi_x = fig2.add_subplot(gs[0, 0])  
                 ax_moi_x.plot(self.span_positions, self.moi_x_list, label="MOI_x", color='blue')
                 ax_moi_x.set_title("Spanwise MOI_x")
                 ax_moi_x.set_ylabel("MOI_xx (m^4)")
                 ax_moi_x.legend()
                 ax_moi_x.grid()
 
-                ax_moi_y = fig.add_subplot(gs[0, 2])  # Top row, third column
+                ax_moi_y = fig2.add_subplot(gs[1, 0])  
                 ax_moi_y.plot(self.span_positions, self.moi_y_list, label="MOI_y", color='red')
                 ax_moi_y.set_title("Spanwise MOI_y")
                 ax_moi_y.set_ylabel("MOI_yy (m^4)")
                 ax_moi_y.legend()
                 ax_moi_y.grid()
+                for i in range(len(self.displacements)):
+                    # Bending displacement pos
+                    ax_bending = fig2.add_subplot(gs[0, i+1])  
+                    ax_bending.plot(self.span_positions, self.displacements[i][0], label="Bending for n="+str(n_tuple[i]), color='blue')
+                    ax_bending.set_title("Bending Displacement for n="+str(n_tuple[i]))
+                    ax_bending.set_ylabel("Displacement (m)")
+                    ax_bending.legend()
+                    ax_bending.grid()
 
-                # Bending displacement
-                ax_bending = fig.add_subplot(gs[1, 1])  # Bottom row, second column
-                ax_bending.plot(self.span_positions, self.bending_displacement, label="Bending", color='blue')
-                ax_bending.set_title("Bending Displacement")
-                ax_bending.set_ylabel("Displacement (m)")
-                ax_bending.legend()
-                ax_bending.grid()
+                    # Torsional twist pos
+                    ax_torsion = fig2.add_subplot(gs[1, i+1])  
+                    ax_torsion.plot(self.span_positions, self.displacements[i][1], label="Twist for n="+str(n_tuple[i]), color='red')
+                    ax_torsion.set_title("Torsional Twist for n="+str(n_tuple[i]))
+                    ax_torsion.set_ylabel("Twist (rad)")
+                    ax_torsion.legend()
+                    ax_torsion.grid()
 
-                # Torsional twist
-                ax_torsion = fig.add_subplot(gs[1, 2])  # Bottom row, third column
-                ax_torsion.plot(self.span_positions, self.torsion, label="Twist", color='red')
-                ax_torsion.set_title("Torsional Twist")
-                ax_torsion.set_ylabel("Twist (rad)")
-                ax_torsion.legend()
-                ax_torsion.grid()
-
-                fig.tight_layout()
+                fig2.tight_layout()
                 plt.show()
 
     # print(box.trapezoid)

@@ -3,6 +3,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
     import pandas as pd
     from scipy import interpolate, integrate
     import matplotlib.pyplot as plt
+    from alive_progress import alive_bar
 
     # Constants
     rho = 0.412  # Air density [kg/m^3]
@@ -133,7 +134,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
     Cm_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cm"], kind='cubic', fill_value="extrapolate")
 
     # Evaluation points
-    y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 1000)
+    y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 100)
 
     # Load cases
     load_cases = {"Positive Load Factor (n=2)": load_factor_1, "Negative Load Factor (n=-1.5)": load_factor_2}
@@ -142,32 +143,40 @@ def main1(load_factor_1: float, load_factor_2: float,):
     results = {}
 
     # Iterate through load cases
-    for label, load_factor in load_cases.items():
-        # Compute the desired lift coefficient (CL_d) based on the load factor
-        CL_d = load_factor * CL0
-        alpha_d = compute_alpha(CL_d)
+    with alive_bar(6) as bar:
+        for label, load_factor in load_cases.items():
+            print("Now running: ", label)
+            # Compute the desired lift coefficient (CL_d) based on the load factor
+            CL_d = load_factor * CL0
+            alpha_d = compute_alpha(CL_d)
 
-        # Compute aerodynamic distributions
-        Cl_d_y = compute_cl_distribution(y_span_eval, Cl_interp_a0, Cl_interp_a10, CL_d)
-        Cm_d_y = compute_cm_distribution(y_span_eval, Cm_interp_a0, Cm_interp_a10, CL_d)
-        dimensional_forces = compute_dimensional_forces(
-            y_span_eval, chord_interp_a0, Cl_d_y, Cd_interp_a0, lambda y: Cm_d_y, q
-        )
-        N_prime = compute_normal_force_distribution(dimensional_forces["L_prime"], dimensional_forces["D_prime"], alpha_d)
+            # Compute aerodynamic distributions
+            Cl_d_y = compute_cl_distribution(y_span_eval, Cl_interp_a0, Cl_interp_a10, CL_d)
+            Cm_d_y = compute_cm_distribution(y_span_eval, Cm_interp_a0, Cm_interp_a10, CL_d)
+            dimensional_forces = compute_dimensional_forces(
+                y_span_eval, chord_interp_a0, Cl_d_y, Cd_interp_a0, lambda y: Cm_d_y, q
+            )
+            N_prime = compute_normal_force_distribution(dimensional_forces["L_prime"], dimensional_forces["D_prime"], alpha_d)
 
-        # Compute shear force, bending moment, and torque distributions
-        shear_force_distribution = compute_shear_force(y_span_eval, N_prime, point_load=2858 * 9.80665, point_load_position=3.9)
-        bending_moment_distribution = compute_bending_moment(y_span_eval, shear_force_distribution)
-        torque_distribution = compute_torque_distribution(
-            y_span_eval, N_prime, dimensional_forces["M_prime"], D_x, point_load=240000, point_load_position=3.9
-        )
+            # Compute shear force, bending moment, and torque distributions
+            print("Shear force distribution")
+            shear_force_distribution = compute_shear_force(y_span_eval, N_prime, point_load=2858 * 9.80665, point_load_position=3.9)
+            bar()
+            print("Bending moment distribution")
+            bending_moment_distribution = compute_bending_moment(y_span_eval, shear_force_distribution)
+            bar()
+            print("Torque distribution")
+            torque_distribution = compute_torque_distribution(
+                y_span_eval, N_prime, dimensional_forces["M_prime"], D_x, point_load=240000, point_load_position=3.9
+            )
+            bar()
 
-        # Store results for plotting
-        results[label] = {
-            "shear_force": shear_force_distribution,
-            "bending_moment": bending_moment_distribution,
-            "torque": torque_distribution
-        }
+            # Store results for plotting
+            results[label] = {
+                "shear_force": shear_force_distribution,
+                "bending_moment": bending_moment_distribution,
+                "torque": torque_distribution
+            }
 
     # Create a single figure for all 6 plots
     fig, axs = plt.subplots(3, 2, figsize=(15, 18))

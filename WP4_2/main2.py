@@ -142,12 +142,16 @@ def main2(loads_1: list, span_pos: list):
                 def dtheta_dy(y: float):
                     #T() needs defining
                     return T(y) / (G * j)
-                def v(y):
+                def dv(y):
                     integral, _ = quad(lambda x: dv_dy(x), 0, y)
+                    return integral
+                def v(y):
+                    integral, _ = quad(lambda x: dv(x), 0, y)
                     return integral
                 def theta(y):
                     integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
                     return integral
+                
                 self.bending_displacement.append(v(chord_at_span[1]))
                 self.torsion.append(theta(chord_at_span[1]))
                 self.moi_x_list.append(moi_x)

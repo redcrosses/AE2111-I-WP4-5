@@ -34,7 +34,7 @@ def read_xflr_data(file):
 # Load AVL Data
 xflr_file_0 = "WP4.1/XFLR0.txt"
 xflr_data_0 = read_xflr_data(xflr_file_0)
-xflr_file_10 = "WP4.1/XFLR10"
+xflr_file_10 = "WP4.1/XFLR10.txt"
 xflr_data_10 = read_xflr_data(xflr_file_10)
 
 # Extract Data

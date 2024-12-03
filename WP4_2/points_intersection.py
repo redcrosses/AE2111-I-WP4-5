@@ -46,7 +46,7 @@ def find_intersections(airfoil_points, y_vals):
     # print("Trapezoid points:", intersections)
     return intersections
 def run(y_vals):
-    file_path = "WP4.2/fx60126.dat"
+    file_path = "WP4_2/fx60126.dat"
     airfoil_points = []
     airfoil_points = np.loadtxt(file_path)
     intersections = find_intersections(airfoil_points, y_vals)

@@ -114,8 +114,8 @@ def main1(load_factor_1: float, load_factor_2: float,):
     #file_path_a0 = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/XFLR0.txt"
     #file_path_a10 = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/XFLR10.txt"
 
-    file_path_a0 = "WP4.1/XFLR0.txt"
-    file_path_a10 = "WP4.1/XFLR10"
+    file_path_a0 = "WP4_1/XFLR0.txt"
+    file_path_a10 = "WP4_1/XFLR10"
 
     df_a0 = reprocess_aerodynamic_data(file_path_a0)
     df_a10 = reprocess_aerodynamic_data(file_path_a10)
@@ -203,7 +203,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
 
     # Adjust layout
     fig.tight_layout()
-    plt.show()
+    plt.show(block = False)
     
     results_pos = [
         list(results["Positive Load Factor (n=2)"]["shear_force"]),
@@ -217,10 +217,13 @@ def main1(load_factor_1: float, load_factor_2: float,):
         list(results["Negative Load Factor (n=-1.5)"]["torque"])
     ]
 
-    return results_pos, results_neg, chord_interp_a0, y_span_eval
+    return results_pos, results_neg, y_span_eval
 
 if __name__ == "__main__":
-    results = main1(2.0, -1.5)
+    results1, results2, results3 = main1(2.0, -1.5)
+    print(results1[1])
     # print("Res pos:", results[0])
     # print("Res neg:", results[1])
+
+
     

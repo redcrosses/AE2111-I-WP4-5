@@ -106,12 +106,12 @@ def main2(loads_1: list, span_pos: list):
     #compute deflection profiles of the wing (app.D.2)
 
     def Mx(y): 
-        return np.interp(y, loads_1[1], span_pos, 0)
+        return np.interp(y, span_pos, loads_1[1], 0)
 
 
 
     def T(y): 
-        return np.interp(y, loads_1[2], span_pos, 0)
+        return np.interp(y, span_pos, loads_1[2], 0)
 
 
     class design():

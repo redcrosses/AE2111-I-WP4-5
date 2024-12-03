@@ -1,257 +1,205 @@
 import numpy as np
+import pandas as pd
+from scipy import interpolate, integrate
 import matplotlib.pyplot as plt
-from scipy.integrate import quad
-import scipy as sp
-from scipy import interpolate
-from scipy.interpolate import interp1d
-
-
 
 # Constants
-V = 10 # [m/s]
-q = 0.5 * 1.225 * V**2
-wing_span = 27.47721  # Total span of the wing (m)
-alpha_a = 14 * np.pi / 180  # Angle of attack in radians
-rho = 1.225  # Air density in kg/m^3 (sea level standard)
-velocity = 0.85 * 343  # Freestream velocity in m/s
+rho = 0.412  # Air density [kg/m^3]
+V = 254.6  # Freestream velocity [m/s]
+q = 0.5 * rho * V**2  # Dynamic pressure [N/m^2]
+CL0 = 0.370799  # Lift coefficient at alpha = 0° (from file)
+CL10 = 1.171363  # Lift coefficient at alpha = 10° (from file)
+D_x = 0.47  # Distance from shear center [m]
 
-# Read AVL Data
-def read_xflr_data(file):
-    data_start = False
+# Function to process aerodynamic data
+def reprocess_aerodynamic_data(file_path):
+    with open(file_path, 'r', encoding='latin1') as file:
+        lines = file.readlines()
+
+    # Locate the "Main Wing" section
+    start_idx = None
+    for i, line in enumerate(lines):
+        if "Main Wing" in line:
+            start_idx = i + 2
+            break
+
+    if start_idx is None:
+        raise ValueError("Main Wing section not found in the file.")
+
+    # Extract aerodynamic coefficients
     data = []
-    with open(file, 'r') as f:
-        for line in f:
-            if "Main Wing" in line and not data_start:
-                data_start = True
-                continue
-            if data_start and (not line.strip() or any(x in line for x in ["Cp Coefficients", "Strip"])):
-                break
-            if data_start:
-                try:
-                    values = list(map(float, line.split()[:8]))
-                    if len(values) == 8:
-                        data.append(values)
-                except ValueError:
-                    continue
-    return np.array(data[int(len(data)/2)::])
+    for line in lines[start_idx:]:
+        if line.strip() == "" or not line.lstrip().startswith(("-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9")):
+            break
+        split_line = line.split()
+        try:
+            y_span, chord, Cl, Cd, Cm = map(float, [split_line[0], split_line[1], split_line[3], split_line[5], split_line[6]])
+            data.append([y_span, chord, Cl, Cd, Cm])
+        except (ValueError, IndexError):
+            continue
 
-# Load AVL Data
-xflr_file_0 = "WP4.1/XFLR0.txt"
-xflr_data_0 = read_xflr_data(xflr_file_0)
-xflr_file_10 = "WP4.1/XFLR10"
-xflr_data_10 = read_xflr_data(xflr_file_10)
+    return pd.DataFrame(data, columns=["y_span", "chord", "Cl", "Cd", "Cm"])
 
-# Extract Data
-spanwise_positions = xflr_data_0[:, 0]
-chords = xflr_data_0[:, 1]
+# Function to compute angle of attack
+def compute_alpha(CL_d):
+    return ((CL_d - CL0) / (CL10 - CL0)) * 10  # In degrees
 
-Cls_0 = xflr_data_0[:, 3]
-Cd_induced_0 = xflr_data_0[:, 5]
+# Function to compute lift coefficient distribution
+def compute_cl_distribution(y_span, Cl_interp_a0, Cl_interp_a10, CL_d):
+    Cl0_y = Cl_interp_a0(y_span)
+    Cl10_y = Cl_interp_a10(y_span)
+    return Cl0_y + ((CL_d - CL0) / (CL10 - CL0)) * (Cl10_y - Cl0_y)
 
-Cls_10 = xflr_data_10[:, 3]
-Cd_induced_10 = xflr_data_10[:, 5]
+# Function to compute moment coefficient distribution
+def compute_cm_distribution(y_span, Cm_interp_a0, Cm_interp_a10, CL_d):
+    Cm0_y = Cm_interp_a0(y_span)
+    Cm10_y = Cm_interp_a10(y_span)
+    return Cm0_y + ((CL_d - CL0) / (CL10 - CL0)) * (Cm10_y - Cm0_y)
 
+# Function to compute dimensional forces
+def compute_dimensional_forces(y_span, chord_interp, Cl_interp, Cd_interp, Cm_interp, q):
+    chord = chord_interp(y_span)
+    Cd = Cd_interp(y_span) + 0.0240256  # Corrected drag coefficient
+    Cm = Cm_interp(y_span)
 
-Cm_0 = xflr_data_0[:, 7]
-Cm_10 = xflr_data_10[:, 7]
+    L_prime = Cl_interp * q * chord  # Lift per unit span [N/m]
+    D_prime = Cd * q * chord  # Drag per unit span [N/m]
+    M_prime = Cm * q * chord**2  # Moment per unit span [Nm/m]
 
+    return {"L_prime": L_prime, "D_prime": D_prime, "M_prime": M_prime}
 
-#Cls_0= sp.interpolate.interp1d(spanwise_positions,Cls_0,kind='cubic',fill_value="extrapolate")
-#Cls_10 = sp.interpolate.interp1d(spanwise_positions,Cls_10,kind='cubic',fill_value="extrapolate")
-
-
-
- # Calculate Distributed Loads
-#L_dist = 0.5 * rho * velocity**2 * Cls_0_interpolated(spanwise_positions) * chords
-#D_dist = 0.5 * rho * velocity**2 * Cd_induced_0 * chords
-#N_dist = np.cos(alpha_a) * L_dist + np.sin(alpha_a) * D_dist
-
-
-# # Engine Properties
-engine_position = 3.9 # [m]
-engine_weight = 2858 * 9.80665 #[N]
-engine_torque = 240000  #[Nm]
-point_loads = [(engine_weight, engine_position)]
-
-# Load Factors
-load_factor_positive = 2.5
-load_factor_negative = -1.5
-
-#distributed_load_positive = N_dist * load_factor_positive
-#distributed_load_negative = N_dist * load_factor_negative
-
-
-def coefficients(Cls0, Cls10, CLd, Cm_0, Cm_10 ):
-
-    CLds = Cls0 + (CLd - Cls0)/(Cls10- Cls0) * ( Cls0- Cls10)
-    alpha = (CLd - Cls0)/(Cls10-Cls0) * 10
-    CD= CLds**2 / (np.pi * 8.05 * 0.891)
-    CM= Cm_0 + (Cm_10- Cm_0)* alpha
-
-
-    CN = CLds * np.cos(alpha* np.pi/180) +CD * np.sin(alpha* np.pi/180)
-    CT = CLds * np.sin(alpha* np.pi/180) +CD * np.cos(alpha* np.pi/180)
-    return(CN,CM)
-CN, CM =coefficients(Cls_0, Cls_10, 0.5, Cm_0, Cm_10)
-
-def dimensionalize(CN,CT,chords):
-    rho = 1.225
-    v = 225  #[m/s]
-    N= CN * 0.5* rho* v**2 * chords
-    T = CT* 0.5 * rho * v ** 2 * chords
-    M = CM * 0.5* rho * v**2 * chords**2
-    return(N,M)
-
-N,M = dimensionalize(CN,10,chords)
-
-
-moment_func = interp1d(spanwise_positions, M, kind = 'cubic', fill_value= 'extrapolate')
-normal_func = interp1d(spanwise_positions, N, kind='cubic', fill_value="extrapolate")
-
-
-def distributed_shear_force(normal_func, positions, point_loads):
+# Function to compute normal force distribution
+def compute_normal_force_distribution(L_prime, D_prime, alpha_d):
+    alpha_rad = np.radians(alpha_d)  # Convert alpha to radians
+    return np.cos(alpha_rad) * L_prime + np.sin(alpha_rad) * D_prime
+# Function to compute shear force distribution
+def compute_shear_force(y_span, N_prime, point_load=None, point_load_position=None):
     shear_force = []
-    for i, x in enumerate(positions):
-        # Integral for distributed normal force from the current position
-        integral, _ = quad(normal_func, x, max(positions))  # Use positions passed to the function
-
-        # Contribution from point loads
-        point_load_contribution = 0  # Start from zero
-        if point_loads:
-            for P, z_p in point_loads:
-                if z_p >= x:  # Include only loads outboard of the current position
-                    point_load_contribution += P
-
-        # Shear force at current position
-        S_x = -integral - point_load_contribution
-        shear_force.append(S_x)
+    for i, y in enumerate(y_span):
+        integral, _ = integrate.quad(lambda yp: np.interp(yp, y_span, N_prime), y, y_span[-1])
+        S = integral  # Convention: upward forces are positive
+        if point_load is not None and point_load_position is not None:
+            if y <= point_load_position:
+                S += point_load
+        shear_force.append(S)
     return np.array(shear_force)
 
-shear_array = distributed_shear_force(N, spanwise_positions, point_loads)
-reaction_moment = shear_array[1]
-print(reaction_moment)
-def distributed_bending_moment(normal_func, positions, point_loads):
+# Function to compute bending moment distribution
+def compute_bending_moment(y_span, shear_force, point_moment=None, point_moment_position=None):
     bending_moment = []
-    for i, x in enumerate(positions):
-        # Integral for distributed normal force from the current position
-        integral, _ = quad(moment_func, x, max(positions))  # Use positions passed to the function
+    for i, y in enumerate(y_span):
+        integral, _ = integrate.quad(lambda yp: np.interp(yp, y_span, shear_force), y, y_span[-1])
+        M = -integral  # Convention: clockwise moments are negative
+        if point_moment is not None and point_moment_position is not None:
+            if y <= point_moment_position:
+                M -= point_moment
+        bending_moment.append(M)
+    return np.array(bending_moment)
 
-        # Contribution from point loads
-        point_load_contribution = 0  # Start from zero
-        if point_loads:
-            for P, z_p in point_loads:
-                if z_p >= x:  # Include only loads outboard of the current position
-                    point_load_contribution += P
+# Function to compute torque distribution
+def compute_torque_distribution(y_span, N_prime, M_prime, D_x, point_load=None, point_load_position=None):
+    torque = []
+    for i, y in enumerate(y_span):
+        q_torque = N_prime * D_x + M_prime  # Distributed torque per unit span
+        integral, _ = integrate.quad(lambda yp: np.interp(yp, y_span, q_torque), y, y_span[-1])
+        T = integral  # Integrate distributed torque
+        if point_load is not None and point_load_position is not None:
+            if y <= point_load_position:
+                T += point_load * D_x
+        torque.append(T)
+    return np.array(torque)
 
-        # Shear force at current position
-        S_x = -integral - point_load_contribution
-        shear_force.append(S_x)
-    return np.array(shear_force)
+# Load aerodynamic data
+#file_path_a0 = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/XFLR0.txt"
+#file_path_a10 = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/XFLR10.txt"
 
+file_path_a0 = "MainWing_a=0.00_v=10.00ms.txt"
+file_path_a10 = "MainWing_a=10.00_v=10.00ms.txt"
 
+df_a0 = reprocess_aerodynamic_data(file_path_a0)
+df_a10 = reprocess_aerodynamic_data(file_path_a10)
 
+# Filter for positive y_span
+df_a0_positive = df_a0[df_a0["y_span"] > 0]
+df_a10_positive = df_a10[df_a10["y_span"] > 0]
 
-#
-# # Functions
-# def interpolate_distributed_load(x, spanwise_positions, distributed_load):
-#     return np.interp(x, spanwise_positions, distributed_load)
-#
-# def compute_shear_force(x_eval, spanwise_positions, distributed_load, point_load_position, point_load):
-#     def distributed_load_function(x):
-#         return interpolate_distributed_load(x, spanwise_positions, distributed_load)
-#
-#     integral_w, _ = quad(distributed_load_function, x_eval, wing_span)
-#
-#     S_eval = -integral_w
-#     if x_eval <= point_load_position:
-#         S_eval += point_load
-#
-#     return S_eval
-#
-# def bending_moment(x_eval, spanwise_positions, shear_force_function):
-#     def shear_integral(x):
-#         return shear_force_function(x)
-#
-#     integral_s, _ = quad(shear_integral, x_eval, wing_span)
-#     return -integral_s
-#
-# def torque_distribution(x_eval, spanwise_positions, distributed_load, torque_position, torque_value):
-#     def torque_integral(x):
-#         interpolated_load = interpolate_distributed_load(x, spanwise_positions, distributed_load)
-#         arm_length = 0.05  # DISTANCE FROM MIDDLE OF ENGINE TO WING LINE
-#         return interpolated_load * arm_length
-#
-#     integral_torque, _ = quad(torque_integral, x_eval, wing_span)
-#
-#     T_eval = integral_torque
-#     if x_eval <= torque_position:
-#         T_eval += torque_value
-#
-#     return T_eval
-#
-# # Compute Results
-# spanwise_positions2 = np.linspace(0, np.max(spanwise_positions), 1000)
-#
-# shear_force_positive = np.array(
-#     [compute_shear_force(x, spanwise_positions, distributed_load_positive, engine_position, engine_weight)
-#      for x in spanwise_positions2]
-# )
-# shear_force_negative = np.array(
-#     [compute_shear_force(x, spanwise_positions, distributed_load_negative, engine_position, engine_weight)
-#      for x in spanwise_positions2]
-# )
-#
-# bending_moment_positive = np.array(
-#     [bending_moment(x, spanwise_positions, lambda x: interpolate_distributed_load(x, spanwise_positions2, shear_force_positive))
-#      for x in spanwise_positions2]
-# )
-# bending_moment_negative = np.array(
-#     [bending_moment(x, spanwise_positions, lambda x: interpolate_distributed_load(x, spanwise_positions2, shear_force_negative))
-#      for x in spanwise_positions2]
-# )
-#
-# torque_positive = np.array(
-#     [torque_distribution(x, spanwise_positions, distributed_load_positive, engine_position, engine_torque) for x in spanwise_positions2]
-# )
-# torque_negative = np.array(
-#     [torque_distribution(x, spanwise_positions, distributed_load_negative, engine_position, engine_torque) for x in spanwise_positions2]
-# )
-#
-# # Plot Results
-# fig, axs = plt.subplots(3, 2, figsize=(15, 12))
-#
-# # Shear Force
-# axs[0, 0].plot(spanwise_positions2, shear_force_positive, label="Shear Force (+)", color='blue')
-# axs[0, 1].plot(spanwise_positions2, shear_force_negative, label="Shear Force (-)", color='red')
-# axs[0, 0].set_title("Positive Load Factor - Shear Force")
-# axs[0, 1].set_title("Negative Load Factor - Shear Force")
-# axs[0, 0].set_ylabel("Shear Force (N)")
-# axs[0, 1].set_ylabel("Shear Force (N)")
-#
-# # Bending Moment
-# axs[1, 0].plot(spanwise_positions2, bending_moment_positive, label="Bending Moment (+)", color='blue')
-# axs[1, 1].plot(spanwise_positions2, bending_moment_negative, label="Bending Moment (-)", color='red')
-# axs[1, 0].set_title("Positive Load Factor - Bending Moment")
-# axs[1, 1].set_title("Negative Load Factor - Bending Moment")
-# axs[1, 0].set_ylabel("Bending Moment (Nm)")
-# axs[1, 1].set_ylabel("Bending Moment (Nm)")
-#
-# # Torque
-# axs[2, 0].plot(spanwise_positions2, torque_positive, label="Torque (+)", color='blue')
-# axs[2, 1].plot(spanwise_positions2, torque_negative, label="Torque (-)", color='red')
-# axs[2, 0].set_title("Positive Load Factor - Torque")
-# axs[2, 1].set_title("Negative Load Factor - Torque")
-# axs[2, 0].set_ylabel("Torque (Nm)")
-# axs[2, 1].set_ylabel("Torque (Nm)")
-#
-# for ax in axs.flat:
-#     ax.set_xlabel("Spanwise Position (m)")
-#     ax.legend()
-#     ax.grid()
-#
-# plt.tight_layout()
-# plt.show()
-#
-# print(torque_positive.shape)
+# Interpolation functions
+Cl_interp_a0 = interpolate.interp1d(df_a0_positive["y_span"], df_a0_positive["Cl"], kind='cubic', fill_value="extrapolate")
+Cd_interp_a0 = interpolate.interp1d(df_a0_positive["y_span"], df_a0_positive["Cd"], kind='cubic', fill_value="extrapolate")
+Cm_interp_a0 = interpolate.interp1d(df_a0_positive["y_span"], df_a0_positive["Cm"], kind='cubic', fill_value="extrapolate")
+chord_interp_a0 = interpolate.interp1d(df_a0_positive["y_span"], df_a0_positive["chord"], kind='cubic', fill_value="extrapolate")
+Cl_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cl"], kind='cubic', fill_value="extrapolate")
+Cm_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cm"], kind='cubic', fill_value="extrapolate")
 
+# Evaluation points
+y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 1000)
 
+# Load cases
+load_cases = {"Positive Load Factor (n=2)": 2, "Negative Load Factor (n=-1.5)": -1.5}
+
+# Dictionary to store results
+results = {}
+
+# Iterate through load cases
+for label, load_factor in load_cases.items():
+    # Compute the desired lift coefficient (CL_d) based on the load factor
+    CL_d = load_factor * CL0
+    alpha_d = compute_alpha(CL_d)
+
+    # Compute aerodynamic distributions
+    Cl_d_y = compute_cl_distribution(y_span_eval, Cl_interp_a0, Cl_interp_a10, CL_d)
+    Cm_d_y = compute_cm_distribution(y_span_eval, Cm_interp_a0, Cm_interp_a10, CL_d)
+    dimensional_forces = compute_dimensional_forces(
+        y_span_eval, chord_interp_a0, Cl_d_y, Cd_interp_a0, lambda y: Cm_d_y, q
+    )
+    N_prime = compute_normal_force_distribution(dimensional_forces["L_prime"], dimensional_forces["D_prime"], alpha_d)
+
+    # Compute shear force, bending moment, and torque distributions
+    shear_force_distribution = compute_shear_force(y_span_eval, N_prime, point_load=2858 * 9.80665, point_load_position=3.9)
+    bending_moment_distribution = compute_bending_moment(y_span_eval, shear_force_distribution)
+    torque_distribution = compute_torque_distribution(
+        y_span_eval, N_prime, dimensional_forces["M_prime"], D_x, point_load=240000, point_load_position=3.9
+    )
+
+    # Store results for plotting
+    results[label] = {
+        "shear_force": shear_force_distribution,
+        "bending_moment": bending_moment_distribution,
+        "torque": torque_distribution
+    }
+
+# Create a single figure for all 6 plots
+fig, axs = plt.subplots(3, 2, figsize=(15, 18))
+
+# Loop through results and plot on separate axes
+for i, (label, res) in enumerate(results.items()):
+    # Shear Force
+    axs[0, i].plot(y_span_eval, res["shear_force"], label=f"Shear Force - {label}")
+    axs[0, i].axvline(x=3.9, color='r', linestyle='--', label="Point Load Position")
+    axs[0, i].set_title(f"Shear Force - {label}")
+    axs[0, i].set_xlabel("Spanwise Position (y) [m]")
+    axs[0, i].set_ylabel("Shear Force [N]")
+    axs[0, i].legend()
+    axs[0, i].grid()
+
+    # Bending Moment
+    axs[1, i].plot(y_span_eval, res["bending_moment"], label=f"Bending Moment - {label}")
+    axs[1, i].axvline(x=3.9, color='r', linestyle='--', label="Point Load Position")
+    axs[1, i].set_title(f"Bending Moment - {label}")
+    axs[1, i].set_xlabel("Spanwise Position (y) [m]")
+    axs[1, i].set_ylabel("Bending Moment [Nm]")
+    axs[1, i].legend()
+    axs[1, i].grid()
+
+    # Torque
+    axs[2, i].plot(y_span_eval, res["torque"], label=f"Torque - {label}")
+    axs[2, i].axvline(x=3.9, color='r', linestyle='--', label="Point Load Position")
+    axs[2, i].set_title(f"Torque - {label}")
+    axs[2, i].set_xlabel("Spanwise Position (y) [m]")
+    axs[2, i].set_ylabel("Torque [Nm]")
+    axs[2, i].legend()
+    axs[2, i].grid()
+
+# Adjust layout
+fig.tight_layout()
+plt.show()

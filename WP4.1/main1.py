@@ -217,7 +217,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
         list(results["Negative Load Factor (n=-1.5)"]["torque"])
     ]
 
-    return results_pos, results_neg, chord_interp_a0
+    return results_pos, results_neg, chord_interp_a0, y_span_eval
 
 if __name__ == "__main__":
     results = main1(2.0, -1.5)

@@ -133,7 +133,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
     Cm_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cm"], kind='cubic', fill_value="extrapolate")
 
     # Evaluation points
-    y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 10)
+    y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 1000)
 
     # Load cases
     load_cases = {"Positive Load Factor (n=2)": load_factor_1, "Negative Load Factor (n=-1.5)": load_factor_2}
@@ -203,7 +203,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
 
     # Adjust layout
     fig.tight_layout()
-    # plt.show()
+    plt.show()
     
     results_pos = [
         list(results["Positive Load Factor (n=2)"]["shear_force"]),
@@ -221,6 +221,6 @@ def main1(load_factor_1: float, load_factor_2: float,):
 
 if __name__ == "__main__":
     results = main1(2.0, -1.5)
-    print("Res pos:", results[0])
-    print("Res neg:", results[1])
+    # print("Res pos:", results[0])
+    # print("Res neg:", results[1])
     

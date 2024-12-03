@@ -53,6 +53,11 @@ def compute_cl_distribution(y_span, Cl_interp_a0, Cl_interp_a10, CL_d):
     Cl10_y = Cl_interp_a10(y_span)
     return Cl0_y + ((CL_d - CL0) / (CL10 - CL0)) * (Cl10_y - Cl0_y)
 
+def compute_cd_distribution(y_span, Cd_interp_a0, Cd_interp_a10, CL_d):
+    Cd0_y = Cd_interp_a0(y_span)
+    Cd10_y = Cd_interp_a10(y_span)
+    return Cd0_y + ((CL_d**2 - CL0**2) / (CL10**2 - CL0**2)) * (Cd10_y - Cd0_y)
+
 # Function to compute moment coefficient distribution
 def compute_cm_distribution(y_span, Cm_interp_a0, Cm_interp_a10, CL_d):
     Cm0_y = Cm_interp_a0(y_span)
@@ -133,6 +138,7 @@ Cm_interp_a0 = interpolate.interp1d(df_a0_positive["y_span"], df_a0_positive["Cm
 chord_interp_a0 = interpolate.interp1d(df_a0_positive["y_span"], df_a0_positive["chord"], kind='cubic', fill_value="extrapolate")
 Cl_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cl"], kind='cubic', fill_value="extrapolate")
 Cm_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cm"], kind='cubic', fill_value="extrapolate")
+Cd_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cd"], kind='cubic', fill_value="extrapolate")
 
 # Evaluation points
 y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 1000)
@@ -152,8 +158,9 @@ for label, load_factor in load_cases.items():
     # Compute aerodynamic distributions
     Cl_d_y = compute_cl_distribution(y_span_eval, Cl_interp_a0, Cl_interp_a10, CL_d)
     Cm_d_y = compute_cm_distribution(y_span_eval, Cm_interp_a0, Cm_interp_a10, CL_d)
+    Cd_d_y = compute_cm_distribution(y_span_eval, Cd_interp_a0, Cd_interp_a10, CL_d)
     dimensional_forces = compute_dimensional_forces(
-        y_span_eval, chord_interp_a0, Cl_d_y, Cd_interp_a0, lambda y: Cm_d_y, q
+        y_span_eval, chord_interp_a0, Cl_d_y, lambda y: Cd_d_y, lambda y: Cm_d_y, q
     )
     N_prime = compute_normal_force_distribution(dimensional_forces["L_prime"], dimensional_forces["D_prime"], alpha_d)
 

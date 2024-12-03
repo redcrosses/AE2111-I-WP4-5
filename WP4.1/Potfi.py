@@ -10,7 +10,7 @@ V = 254.6  # Freestream velocity [m/s]
 q = 0.5 * rho * V**2  # Dynamic pressure [N/m^2]
 CL0 = 0.370799  # Lift coefficient at alpha = 0° (from file)
 CL10 = 1.171363  # Lift coefficient at alpha = 10° (from file)
-D_x = 0.47  # Distance from shear center [m]
+#D_x = 0.47  # Distance from shear center [m]
 w= 110389.610390
 s=134.81210
 
@@ -104,7 +104,16 @@ def compute_bending_moment(y_span, shear_force, point_moment=None, point_moment_
         bending_moment.append(M)
     return np.array(bending_moment)
 
-# Function to compute torque distribution
+
+def compute_dx_interpolator(y_span, chord_interp):
+
+    # Compute D_x at the given y_span locations
+    D_x_values = 0.47 - chord_interp(y_span) / 4
+
+    # Create and return an interpolator for D_x
+    return interpolate.interp1d(y_span, D_x_values, kind='cubic', fill_value="extrapolate")
+
+
 def compute_torque_distribution(y_span, N_prime, M_prime, D_x, point_load=None, point_load_position=None):
     torque = []
     for i, y in enumerate(y_span):
@@ -113,9 +122,23 @@ def compute_torque_distribution(y_span, N_prime, M_prime, D_x, point_load=None, 
         T = integral  # Integrate distributed torque
         if point_load is not None and point_load_position is not None:
             if y <= point_load_position:
-                T += point_load * D_x
+                T += point_load * D_x[i]  # Use the specific D_x value at the current index
         torque.append(T)
     return np.array(torque)
+
+
+# Function to compute torque distribution
+#def compute_torque_distribution(y_span, N_prime, M_prime, D_x, point_load=None, point_load_position=None):
+#    torque = []
+#    for i, y in enumerate(y_span):
+#        q_torque = N_prime * D_x + M_prime  # Distributed torque per unit span
+#        integral, _ = integrate.quad(lambda yp: np.interp(yp, y_span, q_torque), y, y_span[-1])
+#        T = integral  # Integrate distributed torque
+#        if point_load is not None and point_load_position is not None:
+#            if y <= point_load_position:
+#                T += point_load * D_x
+#        torque.append(T)
+#    return np.array(torque)
 
 # Load aerodynamic data
 file_path_a0 = "C:/Users/potfi/Documents/GitHub/B03-WP4/WP4.1/XFLR0.txt"
@@ -154,6 +177,8 @@ for label, load_factor in load_cases.items():
     # Compute the desired lift coefficient (CL_d) based on the load factor
     CL_d = (load_factor * w) / (q * s)
     alpha_d = compute_alpha(CL_d)
+    D_x_interpolator = compute_dx_interpolator(y_span_eval, chord_interp_a0)
+    D_x = D_x_interpolator(y_span_eval)  # Evaluate D_x at any spanwise location
 
     # Compute aerodynamic distributions
     Cl_d_y = compute_cl_distribution(y_span_eval, Cl_interp_a0, Cl_interp_a10, CL_d)

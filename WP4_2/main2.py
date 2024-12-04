@@ -2,8 +2,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
-    import scipy as sp
-    from scipy.integrate import quad
+    from scipy.integrate import cumulative_trapezoid
     from WP4_2.centroid import centroid_of_quadrilateral
     import WP4_2.points_intersection
     from alive_progress import alive_bar
@@ -115,6 +114,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                     torsion: list = []
                     self.moi_x_list: list = []
                     self.moi_y_list: list = []
+                    self.j_list: list = []
                     print("Load for ", n_tuple[i])
                     def Mx(y): 
                         return np.interp(y, span_pos, loads[i][1], 0)
@@ -129,26 +129,37 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                         moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness)
                         moi_y: float = MOI_y(box, stringer_area, box.stringers, box.hspar_thickness, vspar_thickness)
                         j = moi_x + moi_y
-                        def dv_dy(y: float): 
-                            integral, _ = quad(lambda x: -Mx(x) / (E * moi_x), 0, y)
-                            #Mx() needs defining
-                            return integral
-                        def dtheta_dy(y: float):
-                            #T() needs defining
-                            return T(y) / (G * j)
-                        def v(y):
-                            integral, _ = quad(lambda x: dv_dy(x), 0, y)
-                            return integral
-                        def theta(y):
-                            integral, _ = quad(lambda x: dtheta_dy(x), 0, y)
-                            return integral
-                        bending_displacement.append(v(chord_at_span[1]))
-                        torsion.append(theta(chord_at_span[1]))
                         self.moi_x_list.append(moi_x)
                         self.moi_y_list.append(moi_y)
+                        self.j_list.append(j)
                         if chord_at_span[0] == self.chords_along_span[0,0] or chord_at_span[0] == self.chords_along_span[-1,0]:
                             self.boxes.append(box)
                         bar()
+
+                    def fmoi_x(y):
+                        return np.interp(y, self.span_positions, self.moi_x_list)
+                    def fmoi_y(y):
+                        return np.interp(y,self.span_positions, self.moi_y_list)
+                    def fj(y):
+                        return np.interp(y,self.span_positions,self.j_list)
+                    
+                    def dv_dy(y):
+                        integrand = -Mx(y) / (E * fmoi_x(y))
+                        return cumulative_trapezoid(integrand, y, initial=0) #we assume cond at wall -- no displacement slope
+                    def v(y):
+                        dv_dy_vals = dv_dy(y)
+                        return cumulative_trapezoid(dv_dy_vals, y, initial=0) #we assume cond at wall -- no displacement
+                    def dtheta_dy(y):
+                        integrand =  T(y) / (G * fj(y))
+                        return cumulative_trapezoid(integrand, y, initial = 0) # we assume cond at wall -- no twist slope
+                    def theta(y):
+                        dtheta_dy_vals = dtheta_dy(y)
+                        return cumulative_trapezoid(dtheta_dy_vals, y, initial=0) # we assume cond at wall -- no twist
+                    #common cum trapezoid W
+
+                    bending_displacement = (v(self.span_positions))
+                    torsion = (theta(self.span_positions))
+
                     self.displacements.append([bending_displacement, torsion]) #displacement first, torsion second
             # print(self.boxes[])
             # print(self.displacements)

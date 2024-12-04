@@ -161,6 +161,9 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                     torsion = (theta(self.span_positions))
 
                     self.displacements.append([bending_displacement, torsion]) #displacement first, torsion second
+                    self.disp_req = 0.1*27.4277
+                    self.twist_req = np.radians(10)
+                    
             # print(self.boxes[])
             # print(self.displacements)
         def graph(self):
@@ -194,7 +197,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 z = np.zeros(x.shape) #every four points in trapezoid_sized is one trapezoid box
 
                 x = np.vstack([x, trapezoids_sized[5:,0] + np.sin(self.sweep)*27.47721]) 
-                y = np.vstack([y, trapezoids_sized[5:,1]]) #close enough for now but it's wrong lol
+                y = np.vstack([y, trapezoids_sized[5:,1]])
                 z = np.vstack([z, np.full_like(z,27.47721)])
                 # print(x,y,x.shape)
 
@@ -203,7 +206,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
 
                 fig1.tight_layout()
                 plt.show(block = False)
-
+                
                 # #vvv second subplot vvv
                 fig2 = plt.figure(figsize=(15,10))
                 gs = GridSpec(2, 3, figure=fig2, width_ratios=[1, 2, 2], height_ratios=[1, 1])            # print(self.boxes[0].trapezoid)
@@ -225,14 +228,18 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                     # Bending displacement pos
                     ax_bending = fig2.add_subplot(gs[0, i+1])  
                     ax_bending.plot(self.span_positions, self.displacements[i][0], label="Bending for n="+str(n_tuple[i]), color='blue')
+                    ax_bending.plot(self.span_positions, np.sign(n_tuple[i])*self.disp_req*np.ones_like(self.span_positions), '--r', label='Displacement requirement')
                     ax_bending.set_title("Bending Displacement for n="+str(n_tuple[i]))
                     ax_bending.set_ylabel("Displacement (m)")
+                    ax_bending.set_ylim(-5,5)
+                    ax_bending.set_aspect("equal")
                     ax_bending.legend()
                     ax_bending.grid()
 
                     # Torsional twist pos
                     ax_torsion = fig2.add_subplot(gs[1, i+1])  
                     ax_torsion.plot(self.span_positions, self.displacements[i][1], label="Twist for n="+str(n_tuple[i]), color='red')
+                    ax_torsion.plot(self.span_positions, -1*np.sign(n_tuple[i])*self.twist_req*np.ones_like(self.span_positions), '--r', label='Twist angle requirement')
                     ax_torsion.set_title("Torsional Twist for n="+str(n_tuple[i]))
                     ax_torsion.set_ylabel("Twist (rad)")
                     ax_torsion.legend()
@@ -242,7 +249,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 plt.show()
 
     # print(box.trapezoid)
-    design = design(0.1258, 0.07702, 0.005, 0.005, 22, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
+    design = design(0.11, 0.07702, 0.005, 0.005, 22, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.graph()
 
     #box.trapezoid provides the trapezoid points, 

@@ -170,7 +170,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                                             np.append(self.boxes[1].trapezoid, [self.boxes[1].trapezoid[0]], axis=0)])
                 # print(trapezoids_sized)
                 #vvv first subplot vvv
-                ax3d = fig1.add_subplot(1, 1, 1, projection='3d')  # First column
+                ax3d = fig1.add_subplot(2, 1, 1, projection='3d')  # First column
                 ax3d.set(xlim3d=[0, 15], ylim3d=[0, 3], zlim3d=[0, 30], box_aspect=(3, 3/5, 6))
 
                 self.sweep = np.radians(25)
@@ -180,6 +180,11 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 airfoil_x = data[:,0]
                 airfoil_y = data[:,1]
                 airfoil_z = np.zeros(airfoil_x.shape)
+
+                ax2d = fig1.add_subplot(2,1,2)
+                ax2d.set_aspect("equal")
+                ax2d.plot(airfoil_x*self.rootchord, airfoil_y*self.rootchord)
+                ax2d.plot(trapezoids_sized[:5,0], trapezoids_sized[:5,1])
 
                 airfoil_x = np.vstack([airfoil_x*self.rootchord, airfoil_x*self.tipchord + 27.47721*np.sin(self.sweep)])
                 airfoil_y = np.vstack([airfoil_y*self.rootchord, airfoil_y*self.tipchord])

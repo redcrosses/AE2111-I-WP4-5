@@ -6,7 +6,6 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
     from WP4_2.centroid import centroid_of_quadrilateral
     import WP4_2.points_intersection
     from alive_progress import alive_bar
-    from colorama import Fore, Style
 
     #Constraints
     #- The wing tip displacement should not exceed 15% of the total span of the wing.
@@ -108,7 +107,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
             self.n_stringers = n_stringers
             self.displacements = []
             #loadings found from diagrams
-            with alive_bar(self.span_positions.shape[0]*2, title= Fore.CYAN + "Processing" + Style.RESET_ALL, bar='smooth', spinner='classic') as bar:
+            with alive_bar(self.span_positions.shape[0]*2, title= "\033[96m {} \033[00m".format("WP4.2:"), bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
                     self.boxes = []
                     bending_displacement: list = []
@@ -249,8 +248,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 fig2.tight_layout()
                 plt.show()
 
-    # print(box.trapezoid)
-    design = design(0.11, 0.07702, 0.005, 0.005, 22, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
+    design = design(0.12079, 0.07702, 0.005, 0.005, 42, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.graph()
 
     #box.trapezoid provides the trapezoid points, 

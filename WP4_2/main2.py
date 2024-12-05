@@ -6,6 +6,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
     from WP4_2.centroid import centroid_of_quadrilateral
     import WP4_2.points_intersection
     from alive_progress import alive_bar
+    from colorama import Fore, Style
 
     #Constraints
     #- The wing tip displacement should not exceed 15% of the total span of the wing.
@@ -107,7 +108,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
             self.n_stringers = n_stringers
             self.displacements = []
             #loadings found from diagrams
-            with alive_bar(self.span_positions.shape[0]*2) as bar:
+            with alive_bar(self.span_positions.shape[0]*2, title= Fore.CYAN + "Processing" + Style.RESET_ALL, bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
                     self.boxes = []
                     bending_displacement: list = []

@@ -122,7 +122,7 @@ def compute_torque_distribution(y_span, N_prime, M_prime, D_x, point_load=None, 
         T = integral  # Integrate distributed torque
         if point_load is not None and point_load_position is not None:
             if y <= point_load_position:
-                T += point_load * D_x[i]  # Use the specific D_x value at the current index
+                T += point_load *D_x[i]  # Use the specific D_x value at the current index
         torque.append(T)
     return np.array(torque)
 
@@ -167,7 +167,7 @@ Cd_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive[
 y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 1000)
 
 # Load cases
-load_cases = {"Positive Load Factor (n=2)": 2, "Negative Load Factor (n=-1.5)": -1.5}
+load_cases = {"Positive Load Factor (n=2)": 2.5, "Negative Load Factor (n=-1.5)": -1}
 
 # Dictionary to store results
 results = {}
@@ -175,8 +175,9 @@ results = {}
 # Iterate through load cases
 for label, load_factor in load_cases.items():
     # Compute the desired lift coefficient (CL_d) based on the load factor
-    CL_d = (load_factor * w) / (q * s)
+    CL_d = CL0*load_factor #(load_factor * w) / (q*s)
     alpha_d = compute_alpha(CL_d)
+    print(CL_d, CL0*load_factor)
     D_x_interpolator = compute_dx_interpolator(y_span_eval, chord_interp_a0)
     D_x = D_x_interpolator(y_span_eval)  # Evaluate D_x at any spanwise location
 

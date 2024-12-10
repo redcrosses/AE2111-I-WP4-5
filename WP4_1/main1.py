@@ -169,7 +169,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
     y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 1000)
 
     # Load cases
-    load_cases = {"Positive Load Factor (n=2)": load_factor_1, "Negative Load Factor (n=-1.5)": load_factor_2}
+    load_cases = {"Positive Load Factor (n=2.5)": load_factor_1, "Negative Load Factor (n=-1.0)": load_factor_2}
 
     # Dictionary to store results
     results = {}
@@ -251,15 +251,15 @@ def main1(load_factor_1: float, load_factor_2: float,):
     plt.show(block = False)
     
     results_pos = [
-        list(results["Positive Load Factor (n=2)"]["shear_force"]),
-        list(results["Positive Load Factor (n=2)"]["bending_moment"]),
-        list(results["Positive Load Factor (n=2)"]["torque"])
+        list(results["Positive Load Factor (n=2.5)"]["shear_force"]),
+        list(results["Positive Load Factor (n=2.5)"]["bending_moment"]),
+        list(results["Positive Load Factor (n=2.5)"]["torque"])
     ]
 
     results_neg = [
-        list(results["Negative Load Factor (n=-1.5)"]["shear_force"]),
-        list(results["Negative Load Factor (n=-1.5)"]["bending_moment"]),
-        list(results["Negative Load Factor (n=-1.5)"]["torque"])
+        list(results["Negative Load Factor (n=-1.0)"]["shear_force"]),
+        list(results["Negative Load Factor (n=-1.0)"]["bending_moment"]),
+        list(results["Negative Load Factor (n=-1.0)"]["torque"])
     ]
 
     return results_pos, results_neg, y_span_eval

@@ -1,4 +1,4 @@
-def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, where the first element is positive loads, second element is negative loads
+def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, numberofstringers:float, stringerarea: float,): #loads is a tuple, where the first element is positive loads, second element is negative loads
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
@@ -20,6 +20,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
             self.frontsparlength: float = frontsparlength
             self.rearsparlength: float = rearsparlength
             self.trapezoid = WP4_2.points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
+            # print(self.trapezoid)
             self.chord: float = chord
             self.unitcentroid = tuple(centroid_of_quadrilateral(self.trapezoid))
             
@@ -214,14 +215,16 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 ax_moi_x = fig2.add_subplot(gs[0, 0])  
                 ax_moi_x.plot(self.span_positions, self.moi_x_list, label="MOI_x", color='blue')
                 ax_moi_x.set_title("Spanwise MOI_x")
+                ax_moi_x.set_xlabel("Spanwise position (m)")
                 ax_moi_x.set_ylabel("MOI_xx (m^4)")
                 ax_moi_x.legend()
                 ax_moi_x.grid()
 
                 ax_moi_y = fig2.add_subplot(gs[1, 0])  
-                ax_moi_y.plot(self.span_positions, self.moi_y_list, label="MOI_y", color='red')
-                ax_moi_y.set_title("Spanwise MOI_y")
-                ax_moi_y.set_ylabel("MOI_yy (m^4)")
+                ax_moi_y.plot(self.span_positions, self.j_list, label="J", color='red')
+                ax_moi_y.set_title("Spanwise J")
+                ax_moi_y.set_xlabel("Spanwise position (m)")
+                ax_moi_y.set_ylabel("J (m^4)")
                 ax_moi_y.legend()
                 ax_moi_y.grid()
                 for i in range(len(self.displacements)):
@@ -230,6 +233,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                     ax_bending.plot(self.span_positions, self.displacements[i][0], label="Bending for n="+str(n_tuple[i]), color='blue')
                     ax_bending.plot(self.span_positions, np.sign(n_tuple[i])*self.disp_req*np.ones_like(self.span_positions), '--r', label='Displacement requirement')
                     ax_bending.set_title("Bending Displacement for n="+str(n_tuple[i]))
+                    ax_bending.set_xlabel("Spanwise position (m)")
                     ax_bending.set_ylabel("Displacement (m)")
                     ax_bending.set_ylim(-5,5)
                     ax_bending.set_aspect("equal")
@@ -241,15 +245,22 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                     ax_torsion.plot(self.span_positions, self.displacements[i][1], label="Twist for n="+str(n_tuple[i]), color='red')
                     ax_torsion.plot(self.span_positions, -1*np.sign(n_tuple[i])*self.twist_req*np.ones_like(self.span_positions), '--r', label='Twist angle requirement')
                     ax_torsion.set_title("Torsional Twist for n="+str(n_tuple[i]))
+                    ax_torsion.set_xlabel("Spanwise position (m)")
                     ax_torsion.set_ylabel("Twist (rad)")
                     ax_torsion.legend()
                     ax_torsion.grid()
 
                 fig2.tight_layout()
                 plt.show()
+        def max(self):
+            print("positive bending: ", self.displacements[0][0][-1])
+            print("negative bending: ", self.displacements[1][0][-1])
+            print("positive torsion: ", self.displacements[0][1][-1])
+            print("negative bending: ", self.displacements[1][1][-1])
 
-    design = design(0.12079, 0.07702, 0.005, 0.005, 42, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
+    design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.graph()
+    design.max()
 
     #box.trapezoid provides the trapezoid points, 
     #box.frontsparlength provides the front spar length

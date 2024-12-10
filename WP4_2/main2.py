@@ -16,13 +16,15 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
     G = 27 * 10**9 #shear modulus
 
     class WingBox():
-        def __init__(self, frontsparlength, rearsparlength, chord, hspar_thickness, vspar_thickness):
-            self.frontsparlength: float = frontsparlength
-            self.rearsparlength: float = rearsparlength
-            self.trapezoid = WP4_2.points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
+        def __init__(self, frontsparpos, rearsparpos, chord, hspar_thickness, vspar_thickness):
+            self.frontsparpos = frontsparpos
+            self.rearsparpos = rearsparpos
+            self.trapezoid = WP4_2.points_intersection.run([self.frontsparpos, self.rearsparpos]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
+            self.frontsparlength: float = self.trapezoid[1,1] - self.trapezoid[0,1]
+            self.rearsparlength: float = self.trapezoid[2,1] - self.trapezoid[3,1]
             self.chord: float = chord
             self.unitcentroid = tuple(centroid_of_quadrilateral(self.trapezoid))
-            
+        
             #airfoil
             self.x1 = np.array([0])
             self.y1 = np.array([0])
@@ -248,7 +250,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 fig2.tight_layout()
                 plt.show()
 
-    design = design(0.12079, 0.08, 0.010, 0.015, 22, 4e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
+    design = design(0.17, 0.59755, 0.010, 0.015, 22, 4e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, number of stringers, stringer area
     design.graph()
 
     #box.trapezoid provides the trapezoid points, 

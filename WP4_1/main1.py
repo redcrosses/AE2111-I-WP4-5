@@ -119,12 +119,12 @@ def main1(load_factor_1: float, load_factor_2: float,):
     def compute_torque_distribution(y_span, N_prime, M_prime, D_x, point_load=None, point_load_position=None):
         torque = []
         for i, y in enumerate(y_span):
-            q_torque = N_prime * D_x + M_prime  # Distributed torque per unit span
+            q_torque = N_prime * D_x[i]+ M_prime  # Distributed torque per unit span
             integral, _ = integrate.quad(lambda yp: np.interp(yp, y_span, q_torque), y, y_span[-1])
             T = integral  # Integrate distributed torque
             if point_load is not None and point_load_position is not None:
                 if y <= point_load_position:
-                    T += point_load *D_x[i]  # Use the specific D_x value at the current index
+                    T += point_load  # Use the specific D_x value at the current index
             torque.append(T)
         return np.array(torque)
 

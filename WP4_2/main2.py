@@ -219,9 +219,9 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 ax_moi_x.grid()
 
                 ax_moi_y = fig2.add_subplot(gs[1, 0])  
-                ax_moi_y.plot(self.span_positions, self.moi_y_list, label="MOI_y", color='red')
-                ax_moi_y.set_title("Spanwise MOI_y")
-                ax_moi_y.set_ylabel("MOI_yy (m^4)")
+                ax_moi_y.plot(self.span_positions, self.j_list, label="J", color='red')
+                ax_moi_y.set_title("Spanwise Polar MOI")
+                ax_moi_y.set_ylabel("J (m^4)")
                 ax_moi_y.legend()
                 ax_moi_y.grid()
                 for i in range(len(self.displacements)):
@@ -248,7 +248,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple): #loads is a tuple, wher
                 fig2.tight_layout()
                 plt.show()
 
-    design = design(0.12079, 0.07702, 0.005, 0.005, 42, 2e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
+    design = design(0.12079, 0.08, 0.010, 0.015, 22, 4e-4) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.graph()
 
     #box.trapezoid provides the trapezoid points, 

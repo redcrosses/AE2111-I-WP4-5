@@ -20,7 +20,8 @@ def main4(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
         r = a/b
         return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
     # t1 and l1 are the dimensions of the rectangle parallel to the wingbox and t2 and l2 are the dimensions for the rectangle,
-    #perperndicular to the wing box, and d1 is the distance between the x axis and the centroid of the parallel rectangle, higher order terms cancel out
+    #perperndicular to the wing box, and d1 is the distance between the x axis and the centroid of the parallel rectangle, 
+    #higher order terms cancel out, MADE BY VICTOR BOSS
     def stringer_sizing(length_1,length_2, thickness_1, thickness_2,d1):
         Ixx =  length_1 * thickness_1 * d1 ** 2 + (1/12) * length_2 ** 3 * thickness_2
         Area_parallel = thickness_1 * length_1

@@ -263,7 +263,6 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
     design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.graph()
     design.max()
-    print(design.chords_along_span)
     return design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span
 
 if __name__ == "__main__":

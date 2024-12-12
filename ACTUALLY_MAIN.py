@@ -21,4 +21,4 @@ moi_x_list, trapezoid, stringer_positions, span_positions_and_chord = main2((loa
 # main2((loads_positive, loads_negative), spanwise_position, (n_positive, n_negative), 0.12079, 0.07702, 0.01, 0.01, 42, 4e-4)
 # main2((loads_positive, loads_negative), spanwise_position, (n_positive, n_negative), 0.12079, 0.06808, 0.01, 0.015, 42, 4e-4)
 
-# main5(moi_x_list, trapezoids, span_positions, (loads_positive, loads_negative))
+main5(moi_x_list, trapezoid, span_positions_and_chord, (loads_positive, loads_negative),spanwise_position)

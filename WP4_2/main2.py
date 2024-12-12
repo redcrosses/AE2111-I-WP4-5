@@ -107,6 +107,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
             self.chords_along_span = np.column_stack((np.interp(self.span_positions, [0, 27.47721/2], [self.rootchord, self.tipchord]), self.span_positions))
             self.n_stringers = n_stringers
             self.displacements = []
+            self.trapezoids:list = []
             #loadings found from diagrams
             with alive_bar(self.span_positions.shape[0]*2, title= "\033[96m {} \033[00m".format("WP4.2:"), bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
@@ -125,6 +126,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                     
                     for chord_at_span in self.chords_along_span:
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
+                        self.trapezoids.append(box.trapezoid)
                         # print(box.unitcentroid)
                         box.makestringers(self.n_stringers,0.95)
                         moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness)
@@ -261,6 +263,11 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
     design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.graph()
     design.max()
+    return design.moi_x_list, design.trapezoids
+
+
+if __name__ == "__main__":
+    pass
 
     #box.trapezoid provides the trapezoid points, 
     #box.frontsparlength provides the front spar length

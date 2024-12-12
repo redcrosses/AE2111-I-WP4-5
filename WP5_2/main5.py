@@ -20,6 +20,9 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
     margin_of_safety_list.append(max_stress/stress)
 
     plt.plot(span_and_chord[:,1], margin_of_safety_list)
+    plt.xlabel("Spanwise position")
+    plt.ylabel("Margin of safety")
+    plt.grid()
     plt.show()
 
 

@@ -8,7 +8,7 @@ def main4(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
             return -8.25872*r**4+45.66709*r**3-86.31837*r**2+60.2625*r
         elif r<=5:
             return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+-11.99811
-        return None
+        return "FUCK YOU"
     def Mx(y): 
         return np.interp(y, spanwise_position, loads[0][1], 0)
     def T(y): 

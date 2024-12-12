@@ -13,8 +13,12 @@ def main4(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
         return np.interp(y, spanwise_position, loads[0][1], 0)
     def T(y): 
         return np.interp(y, spanwise_position, loads[0][2], 0)
-    
+    def K_s(a, b):
+        r = a/b
+        return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
 
 
 if __name__ == "__main__":
     pass
+
+#Curve fit: Buckling coefficient for rectangular isotropic plates under shear

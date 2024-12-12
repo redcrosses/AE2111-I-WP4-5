@@ -1,5 +1,6 @@
 def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
   import numpy as np
+  import matplotlib.pyplot as plt
   def Mx(y): 
     return np.interp(y, spanwise_position, loads[0][1], 0)
   max_stress = 450 *10**6 #MPa
@@ -17,6 +18,11 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
       Failed = True
     
     margin_of_safety_list.append(max_stress/stress)
+
+    plt.plot(span_and_chord[:,1], margin_of_safety_list)
+    plt.show()
+
+
   return margin_of_safety_list, M_max
 
 if __name__ == "__main__":

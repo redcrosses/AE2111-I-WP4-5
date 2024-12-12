@@ -7,3 +7,9 @@ def K_c(a,b): # curve fit for skin buckling coefficient Kc
     elif r<=5:
         return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+-11.99811
     return None
+
+#Curve fit: Buckling coefficient for rectangular isotropic plates under shear
+def K_s(a, b):
+    r = a/b
+    return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
+ 

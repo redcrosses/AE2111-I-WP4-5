@@ -1,3 +1,6 @@
+
+
+
 import numpy as np
 def main4(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
@@ -16,9 +19,17 @@ def main4(I_xx, trapezoids, span_and_chord, loads, spanwise_position):
     def K_s(a, b):
         r = a/b
         return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
+# Column buckling critical stress
+    def column_buckling(MOI, A, L):
+        K = 4
+        E = 72.4*10**9
 
+        critical_stress = (K*np.pi**2*E*MOI)/(L**2*A)
+
+        return critical_stress
 
 if __name__ == "__main__":
     pass
 
 #Curve fit: Buckling coefficient for rectangular isotropic plates under shear
+

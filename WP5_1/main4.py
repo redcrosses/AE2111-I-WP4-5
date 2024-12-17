@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design):
+def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design: object):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
         if r >0.69 and r<=1.12:

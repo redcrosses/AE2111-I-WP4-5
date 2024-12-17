@@ -84,6 +84,12 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         plt.ylim(-3,3)
         plt.gca().set_aspect("equal", adjustable='box')
         # plt.show()
+    
+    def maxshear():
+        frontlength = design.chords_along_span[:,0]*design.frontsparlength
+        rearlength = design.chords_along_span[:,0]*design.rearsparlength
+        averageshear = V(design.chords_along_span)/((frontlength+rearlength)*design.vspar_thickness)
+        maxshear = 1.5*averageshear
 
 
 

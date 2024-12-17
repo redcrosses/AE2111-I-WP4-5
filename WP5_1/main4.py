@@ -19,6 +19,11 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         r = a/b
         return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
 
+    # Shear buckling critical stress
+    def critical_shear_stress(ks, t, b, E=72.4 * 10 ** 9, nu=0.33, ):
+        tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
+
+        return tau_cr
     # Column buckling critical stress
     def column_buckling(MOI, A, L):
         K = 4

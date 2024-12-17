@@ -125,7 +125,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                 Iyy_stringer =  Area_perpendicular * x_centroid_stringer ** 2 + (1/12) * length_1 ** 3 * thickness_1 + Area_parallel * (length_1-x_centroid_stringer) ** 2
 
                 return Ixx_stringer, Iyy_stringer, Area_perpendicular, Area_parallel, Total_area_stringer
-            Ixx_stringer, Iyy_stringer, Area_perpendicular, Area_parallel, Total_area_stringer = stringer_sizing(stringer_width, stringer_height, thickness_1, thickness_2)
+            self.Ixx_stringer, self.Iyy_stringer, Area_perpendicular, Area_parallel, Total_area_stringer = stringer_sizing(stringer_width, stringer_height, thickness_1, thickness_2)
     
             with alive_bar(self.span_positions.shape[0]*2, title= "\033[96m {} \033[00m".format("WP4.2:"), bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
@@ -151,9 +151,9 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
                         # print(box.unitcentroid)
                         box.makestringers(self.n_stringers,0.95)
-                        moi_x: float = MOI_x(box, Total_area_stringer, box.stringers, box.hspar_thickness, box.vspar_thickness) + Ixx_stringer*self.n_stringers
+                        moi_x: float = MOI_x(box, Total_area_stringer, box.stringers, box.hspar_thickness, box.vspar_thickness) + self.Ixx_stringer*self.n_stringers
                         moi_y: float = MOI_y(box, Total_area_stringer, box.stringers, box.hspar_thickness, vspar_thickness)
-                        j = moi_x + moi_y + Iyy_stringer*self.n_stringers
+                        j = moi_x + moi_y + self.Iyy_stringer*self.n_stringers
                         self.moi_x_list.append(moi_x)
                         self.moi_y_list.append(moi_y)
                         self.j_list.append(j)

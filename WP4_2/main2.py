@@ -20,7 +20,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
             self.frontsparlength: float = frontsparlength
             self.rearsparlength: float = rearsparlength
             self.trapezoid = WP4_2.points_intersection.run([self.frontsparlength, self.rearsparlength]) #code to fit the front and rear spars into the airfoil shape. Produces the with trapezoid points
-            # print(self.trapezoid)
+            self.init_trapezoid = self.trapezoid
             self.chord: float = chord
             self.unitcentroid = tuple(centroid_of_quadrilateral(self.trapezoid))
             
@@ -122,6 +122,11 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
 
                     def T(y): 
                         return np.interp(y, span_pos, loads[i][2], 0)
+                    
+                    box: object = WingBox(frontsparlength, rearsparlength, 1, hspar_thickness, vspar_thickness)
+                    box.makestringers(self.n_stringers,0.95)
+                    self.trapezoid = box.init_trapezoid
+                    self.stringers = box.stringers
                     
                     for chord_at_span in self.chords_along_span:
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
@@ -254,13 +259,34 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                 plt.show()
         def max(self):
             print("positive bending: ", self.displacements[0][0][-1])
+            if self.displacements[0][0][-1] < self.disp_req:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
             print("negative bending: ", self.displacements[1][0][-1])
+            if self.displacements[1][0][-1] > -1*self.disp_req:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
             print("positive torsion: ", self.displacements[0][1][-1])
-            print("negative bending: ", self.displacements[1][1][-1])
+            if self.displacements[0][1][-1] > -1*self.twist_req:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
+            print("negative torsion: ", self.displacements[1][1][-1])
+            if self.displacements[1][1][-1] < 1*self.twist_req:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
 
     design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
-    design.graph()
     design.max()
+    # design.graph()
+    
+    return design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span
+
+if __name__ == "__main__":
+    pass
 
     #box.trapezoid provides the trapezoid points, 
     #box.frontsparlength provides the front spar length

@@ -1,4 +1,4 @@
-def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, numberofstringers:float, stringerarea: float,): #loads is a tuple, where the first element is positive loads, second element is negative loads
+def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, numberofstringers:float, stringerarea: float, stringer_width=0.03, stringer_height=0.03, thickness_1=0.001, thickness_2=0.001): #loads is a tuple, where the first element is positive loads, second element is negative loads
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
@@ -108,6 +108,21 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
             self.n_stringers = n_stringers
             self.displacements = []
             #loadings found from diagrams
+            def stringer_sizing(length_1,length_2, thickness_1, thickness_2):
+                # t1 and l1 are the dimensions of the rectangle parallel to the wingbox and t2 and l2 are the dimensions for the rectangle,
+                #perperndicular to the wing box, and d1 is the distance between the x axis and the centroid of the parallel rectangle, 
+                #higher order terms cancel out, MADE BY VICTOR BOSS
+                Area_parallel = thickness_1 * length_1
+                Area_perpendicular = thickness_2 * length_2 
+                Total_area_stringer = Area_parallel + Area_perpendicular
+                y_centroid_stringer = (Area_perpendicular*length_2/2)/Total_area_stringer
+                x_centroid_stringer = (Area_parallel*length_1/2)/Total_area_stringer
+                Ixx_stringer =  Area_parallel * y_centroid_stringer ** 2 + (1/12) * length_2 ** 3 * thickness_2 + Area_perpendicular * (length_2-y_centroid_stringer) ** 2
+                Iyy_stringer =  Area_perpendicular * x_centroid_stringer ** 2 + (1/12) * length_1 ** 3 * thickness_1 + Area_parallel * (length_1-x_centroid_stringer) ** 2
+
+                return Ixx_stringer, Iyy_stringer, Area_perpendicular, Area_parallel, Total_area_stringer
+            Ixx_stringer, Iyy_stringer, Area_perpendicular, Area_parallel, Total_area_stringer = stringer_sizing(stringer_width, stringer_height, thickness_1, thickness_2)
+    
             with alive_bar(self.span_positions.shape[0]*2, title= "\033[96m {} \033[00m".format("WP4.2:"), bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
                     self.boxes = []
@@ -132,9 +147,9 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
                         # print(box.unitcentroid)
                         box.makestringers(self.n_stringers,0.95)
-                        moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness)
+                        moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness) + Ixx_stringer*self.n_stringers
                         moi_y: float = MOI_y(box, stringer_area, box.stringers, box.hspar_thickness, vspar_thickness)
-                        j = moi_x + moi_y
+                        j = moi_x + moi_y + Iyy_stringer*self.n_stringers
                         self.moi_x_list.append(moi_x)
                         self.moi_y_list.append(moi_y)
                         self.j_list.append(j)
@@ -282,10 +297,11 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
     design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.max()
     # design.graph()
-    
-    return design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span
+    # design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span
+    return design
 
 if __name__ == "__main__":
+    
     pass
 
     #box.trapezoid provides the trapezoid points, 

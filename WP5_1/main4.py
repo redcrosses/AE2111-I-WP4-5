@@ -19,16 +19,6 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
     def K_s(a, b):
         r = a/b
         return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
-    
-    def stringer_sizing(length_1,length_2, thickness_1, thickness_2,d1):
-        # t1 and l1 are the dimensions of the rectangle parallel to the wingbox and t2 and l2 are the dimensions for the rectangle,
-        #perperndicular to the wing box, and d1 is the distance between the x axis and the centroid of the parallel rectangle, 
-        #higher order terms cancel out, MADE BY VICTOR BOSS
-        Ixx =  length_1 * thickness_1 * d1 ** 2 + (1/12) * length_2 ** 3 * thickness_2
-        Area_parallel = thickness_1 * length_1
-        Area_perpendicular = thickness_2 * length_2 
-        Total_area_stringer = Area_parallel + Area_perpendicular
-        return Ixx, Area_perpendicular, Area_parallel, Total_area_stringer
 
     # Shear buckling critical stress
     def critical_shear_stress(ks, t, b, E=72.4 * 10 ** 9, nu=0.33, ):

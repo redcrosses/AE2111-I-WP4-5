@@ -108,6 +108,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
             self.n_stringers = n_stringers
             self.displacements = []
             #loadings found from diagrams
+    
             with alive_bar(self.span_positions.shape[0]*2, title= "\033[96m {} \033[00m".format("WP4.2:"), bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
                     self.boxes = []

@@ -73,9 +73,15 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         frontlength = design.chords_along_span[:,0]*design.frontsparlength
         rearlength = design.chords_along_span[:,0]*design.rearsparlength
         averageshear = V(design.chords_along_span)/((frontlength+rearlength)*design.vspar_thickness)
-        maxshear = 1.5*averageshear
+        return maxshear = 1.5*averageshear
 
+    def left_spar_shear_stress():
+        tau_left = maxshear+tau_s
+        return tau_left
 
+    def right_spar_shear_stress():
+        tau_right = maxshear-tau_s
+        return tau_right
 
 if __name__ == "__main__":
     pass

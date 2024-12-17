@@ -107,6 +107,10 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
             self.chords_along_span = np.column_stack((np.interp(self.span_positions, [0, 27.47721/2], [self.rootchord, self.tipchord]), self.span_positions))
             self.n_stringers = n_stringers
             self.displacements = []
+            self.frontsparlength = frontsparlength
+            self.rearsparlength = rearsparlength
+            self.hspar_thickness = hspar_thickness
+            self.vspar_thickness = vspar_thickness
             #loadings found from diagrams
             def stringer_sizing(length_1,length_2, thickness_1, thickness_2):
                 # t1 and l1 are the dimensions of the rectangle parallel to the wingbox and t2 and l2 are the dimensions for the rectangle,
@@ -147,8 +151,8 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
                         # print(box.unitcentroid)
                         box.makestringers(self.n_stringers,0.95)
-                        moi_x: float = MOI_x(box, stringer_area, box.stringers, box.hspar_thickness, box.vspar_thickness) + Ixx_stringer*self.n_stringers
-                        moi_y: float = MOI_y(box, stringer_area, box.stringers, box.hspar_thickness, vspar_thickness)
+                        moi_x: float = MOI_x(box, Total_area_stringer, box.stringers, box.hspar_thickness, box.vspar_thickness) + Ixx_stringer*self.n_stringers
+                        moi_y: float = MOI_y(box, Total_area_stringer, box.stringers, box.hspar_thickness, vspar_thickness)
                         j = moi_x + moi_y + Iyy_stringer*self.n_stringers
                         self.moi_x_list.append(moi_x)
                         self.moi_y_list.append(moi_y)

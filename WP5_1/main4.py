@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position):
+def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
         if r >0.69 and r<=1.12:
@@ -59,6 +59,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         plt.ylim(-3,3)
         plt.gca().set_aspect("equal", adjustable='box')
         plt.show()
+
+    
 
 if __name__ == "__main__":
     pass

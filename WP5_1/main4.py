@@ -63,8 +63,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
     def enclosed_area(trapezoid):
         frontlength = design.chords_along_span[:, 0] * design.frontsparlength
         rearlength = design.chords_along_span[:, 0] * design.rearsparlength
-
-
+        width = design.chords_along_span[:, 0] * design.width
+        area = (frontlength + rearlength) / 2 * width
         return area
     def torsion_shear_stress(area, y, thickness):
         tau_s = T(y)/(2*area*thickness)

@@ -38,6 +38,17 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_s = T(y)/(2*area*thickness)
         return tau_s
 
+    def enclosed_area(trapezoid):
+        x = trapezoid[:, 0]
+        y = trapezoid[:, 1]
+        area = 0.5 * abs(
+            np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))
+        )
+
+        return area
+    def torsion_shear_stress(area, y, thickness):
+        tau_s = T(y)/(2*area*thickness)
+        return tau_s
     # Column buckling critical stress
     def column_buckling(MOI, A, L):
         K = 4
@@ -74,7 +85,7 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         plt.gca().set_aspect("equal", adjustable='box')
         plt.show()
 
-    
+
 
 if __name__ == "__main__":
     pass

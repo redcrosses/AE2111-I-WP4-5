@@ -60,6 +60,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
 
         plt.plot(current_trapezoid[:,0], current_trapezoid[:,1], 'o')
         plt.plot(current_stringers[:,0], current_stringers[:,1], 'o')
+        plt.ylim(-3,3)
+        plt.gca().set_aspect("equal", adjustable='box')
         plt.show()
 
 if __name__ == "__main__":

@@ -10,7 +10,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         elif r<=5:
             return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+-11.99811
         return "FUCK YOU"
-    
+    def V(y):
+        return np.interp(y, spanwise_position, loads[0][0], 0)
     def Mx(y): 
         return np.interp(y, spanwise_position, loads[0][1], 0)
     def T(y): 

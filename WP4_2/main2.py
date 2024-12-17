@@ -144,9 +144,10 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                     
                     box: object = WingBox(frontsparlength, rearsparlength, 1, hspar_thickness, vspar_thickness)
                     box.makestringers(self.n_stringers,0.95)
+                    self.width = box.width
                     self.trapezoid = box.init_trapezoid
                     self.stringers = box.stringers
-                    
+                
                     for chord_at_span in self.chords_along_span:
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
                         # print(box.unitcentroid)

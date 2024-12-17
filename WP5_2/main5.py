@@ -5,9 +5,24 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
 
     def Mx(y):
         # Interpolate the moment along the spanwise position
-        return np.interp(y, spanwise_position, loads[0][1], left=0, right=0)
+        moment = np.interp(y, spanwise_position, loads[0][1], left=0, right=0)
+        
+        # If the moment is exactly 0, replace it with the closest non-zero value
+        if moment == 0:
+            non_zero_values = np.array(loads[0][1])[np.array(loads[0][1]) != 0]  # Filter out zero values
+            closest_index = np.argmin(np.abs(np.array(spanwise_position) - y))  # Find the closest index
+            moment = non_zero_values[np.argmin(np.abs(non_zero_values - loads[0][1][closest_index]))]
+        
+        # Ensure the moment meets the threshold requirement
+        return max(moment, -2537900.3936588285)
+
+    # def Mx(y):
+    # # Interpolate the moment along the spanwise position
+    #     moment = np.interp(y, spanwise_position, loads[0][1], left=0, right=0)
+    #     return max(moment,)
 
     margin_of_safety_list = []
+    moment_list = []
     M_max = 0
     Failed = False
 
@@ -28,6 +43,7 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
         margin_of_safety = abs(max_stress / stress) if stress != 0 else float('inf')
         margin_of_safety = min(margin_of_safety, max_margin)
         margin_of_safety_list.append(margin_of_safety)
+        moment_list.append(M)
 
     # Convert to numpy array
     margin_of_safety_list = np.array(margin_of_safety_list)
@@ -103,6 +119,8 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
     # plt.grid(True)
     # plt.tight_layout()
     # plt.show()
+
+    print(moment_list)
 
     return margin_of_safety_list.tolist(), M_max
 

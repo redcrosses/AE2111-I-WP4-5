@@ -30,6 +30,11 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         Total_area_stringer = Area_parallel + Area_perpendicular
         return Ixx, Area_perpendicular, Area_parallel, Total_area_stringer
 
+    # Shear buckling critical stress
+    def critical_shear_stress(ks, t, b, E=72.4 * 10 ** 9, nu=0.33, ):
+        tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
+
+        return tau_cr
     # Column buckling critical stress
     def column_buckling(MOI, A, L):
         K = 4

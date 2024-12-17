@@ -60,14 +60,14 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
         return tau_cr
 
-    def enclosed_area(trapezoid):
+    def enclosed_area(y):
         frontlength = design.chords_along_span[:, 0] * design.frontsparlength
         rearlength = design.chords_along_span[:, 0] * design.rearsparlength
         width = design.chords_along_span[:, 0] * design.width
         area = (frontlength + rearlength) / 2 * width
         return area
-    def torsion_shear_stress(area, y, thickness):
-        tau_s = T(y)/(2*area*thickness)
+    def torsion_shear_stress():
+        tau_s = T(design.chords_along_span)/(2*enclosed_area(design.chords_along_span)*design.vspar_thickness))
         return tau_s
     def maxshear():
         frontlength = design.chords_along_span[:,0]*design.frontsparlength

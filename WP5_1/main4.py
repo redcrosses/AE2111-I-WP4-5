@@ -34,12 +34,26 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
 
         return tau_cr
+
+    def enclosed_area(trapezoid):
+        x = trapezoid[:, 0]
+        y = trapezoid[:, 1]
+        area = 0.5 * abs(
+            np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))
+        )
+
+        return area
+    def torsion_shear_stress(area, y, thickness):
+        tau_s = T(y)/(2*area*thickness)
+        return tau_s
+
     # Column buckling critical stress
     def column_buckling(MOI, A, L):
         K = 4
         E = 72.4*10**9
         critical_stress = (K*np.pi**2*E*MOI)/(L**2*A)
         return critical_stress
+
     def tau_cr(ks, E, nu, t, b):
         tau_cr = (np.pi**2 * ks * E) / (12 * (1 - nu**2)) * (t / b)**2
         return tau_cr

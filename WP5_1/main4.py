@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design):
+def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design: object):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
         if r >0.69 and r<=1.12:
@@ -25,6 +25,30 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
         return tau_cr
 
+    def enclosed_area():
+        frontlength = design.chords_along_span[:, 0] * design.frontsparlength
+        rearlength = design.chords_along_span[:, 0] * design.rearsparlength
+        width = design.chords_along_span[:, 0] * design.width
+        area = (frontlength + rearlength) / 2 * width
+        return area
+    
+    def torsion_shear_stress():
+        tau_s = T(design.chords_along_span)/(2*enclosed_area(design.chords_along_span)*design.vspar_thickness)
+        return tau_s
+    
+    def maxshear():
+        frontlength = design.chords_along_span[:,0]*design.frontsparlength
+        rearlength = design.chords_along_span[:,0]*design.rearsparlength
+        averageshear = V(design.chords_along_span)/((frontlength+rearlength)*design.vspar_thickness)
+        return 1.5*averageshear
+
+    def left_spar_shear_stress(maxshear, tau_s):
+        tau_left = maxshear+tau_s
+        return tau_left
+
+    def right_spar_shear_stress(maxshear, tau_s):
+        tau_right = maxshear-tau_s
+        return tau_right
     def enclosed_area(trapezoid):
         x = trapezoid[:, 0]
         y = trapezoid[:, 1]
@@ -33,18 +57,6 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         )
         return area
     
-    def torsion_shear_stress(area, y, thickness):
-        tau_s = T(y)/(2*area*thickness)
-        return tau_s
-
-    def enclosed_area(trapezoid):
-        x = trapezoid[:, 0]
-        y = trapezoid[:, 1]
-        area = 0.5 * abs(
-            np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))
-        )
-
-        return area
     def torsion_shear_stress(area, y, thickness):
         tau_s = T(y)/(2*area*thickness)
         return tau_s
@@ -137,7 +149,6 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         # plt.ylim(-3,3)
         # plt.gca().set_aspect("equal", adjustable='box')
         # plt.show()
-
 
 
 if __name__ == "__main__":

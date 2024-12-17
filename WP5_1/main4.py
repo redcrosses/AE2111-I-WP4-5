@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position):
+def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
         if r >0.69 and r<=1.12:
@@ -10,7 +10,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         elif r<=5:
             return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+-11.99811
         return "FUCK YOU"
-    
+    def V(y):
+        return np.interp(y, spanwise_position, loads[0][0], 0)
     def Mx(y): 
         return np.interp(y, spanwise_position, loads[0][1], 0)
     def T(y): 
@@ -24,12 +25,37 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
 
         return tau_cr
+
+    def enclosed_area(trapezoid):
+        x = trapezoid[:, 0]
+        y = trapezoid[:, 1]
+        area = 0.5 * abs(
+            np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))
+        )
+
+        return area
+    def torsion_shear_stress(area, y, thickness):
+        tau_s = T(y)/(2*area*thickness)
+        return tau_s
+
+    def enclosed_area(trapezoid):
+        x = trapezoid[:, 0]
+        y = trapezoid[:, 1]
+        area = 0.5 * abs(
+            np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))
+        )
+
+        return area
+    def torsion_shear_stress(area, y, thickness):
+        tau_s = T(y)/(2*area*thickness)
+        return tau_s
     # Column buckling critical stress
     def column_buckling(MOI, A, L):
         K = 4
         E = 72.4*10**9
         critical_stress = (K*np.pi**2*E*MOI)/(L**2*A)
         return critical_stress
+
     def tau_cr(ks, E, nu, t, b):
         tau_cr = (np.pi**2 * ks * E) / (12 * (1 - nu**2)) * (t / b)**2
         return tau_cr
@@ -58,6 +84,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         plt.ylim(-3,3)
         plt.gca().set_aspect("equal", adjustable='box')
         # plt.show()
+
+
 
 if __name__ == "__main__":
     pass

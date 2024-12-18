@@ -312,6 +312,16 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
 
                 fig2.tight_layout()
                 # plt.show(block=False)
+                while 69:
+                    inp = input("View Graphs? [y/n] ")
+                    try:
+                        if inp == "y":
+                            plt.show()
+                            break
+                        if inp == "n":
+                            break
+                    except:
+                        pass 
 
         def max(self):
             print("\n\033[1m\033[4mBending/Torsion Requirements:\033[0m")

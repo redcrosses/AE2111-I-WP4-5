@@ -23,22 +23,9 @@ loads_positive, loads_negative, spanwise_position = main1(n_positive, n_negative
 design: object = main2((loads_positive, loads_negative), spanwise_position, (n_positive, n_negative), 0.1056927, 0.07702, 0.01, 0.01, 2, 10, 0.04, 0.04, 0.001, 0.001) 
 #loads, span positions, loading factors,  front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, rib spacing [m], number of stringers
 #last four are dimensions of an L stringer; width, height, width thickness, height thickness [m]
-#testing tensile side of the design
-margin, max = main5(design.moi_x_list, design.trapezoid,  design.chords_along_span, (loads_positive, loads_negative), spanwise_position)
-#testing critical buckling case for the design
-main4(design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span, (loads_positive, loads_negative), spanwise_position, design)
-
+margin, max = main5(design.moi_x_list, design.trapezoid,  design.chords_along_span, (loads_positive, loads_negative), spanwise_position) #testing tensile side of the design
+main4(design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span, (loads_positive, loads_negative), spanwise_position, design) #testing critical buckling case for the design
 design.graph()
-while 69:
-    inp = input("View Graphs? [y/n] ")
-    try:
-        if inp == "y":
-            plt.show()
-            break
-        if inp == "n":
-            break
-    except:
-        pass 
 # print(design.chords_along_span)
 
 # moi_x_list, trapezoid, stringer_positions, span_positions_and_chord 

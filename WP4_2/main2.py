@@ -278,27 +278,27 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                 fig2.tight_layout()
                 plt.show()
         def max(self):
-            print("positive bending: ", self.displacements[0][0][-1])
+            print("positive bending: ", self.displacements[0][0][-1], end="")
             if self.displacements[0][0][-1] < self.disp_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-            print("negative bending: ", self.displacements[1][0][-1])
+            print("negative bending: ", self.displacements[1][0][-1], end="")
             if self.displacements[1][0][-1] > -1*self.disp_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-            print("positive torsion: ", self.displacements[0][1][-1])
+            print("positive torsion: ", self.displacements[0][1][-1], end="")
             if self.displacements[0][1][-1] > -1*self.twist_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-            print("negative torsion: ", self.displacements[1][1][-1])
+            print("negative torsion: ", self.displacements[1][1][-1], end="")
             if self.displacements[1][1][-1] < 1*self.twist_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-
+            # print("\n")
     design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
     design.max()
     # design.graph()

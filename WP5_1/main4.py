@@ -1,5 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from alive_progress import alive_bar
+class KcOutofBounds(Exception):
+    pass
+
 def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design: object):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
@@ -8,15 +12,21 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         elif r<=1.81:
             return -8.25872*r**4+45.66709*r**3-86.31837*r**2+60.2625*r
         elif r<=5:
-            return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+-11.99811
-        return "FUCK YOU"
+            return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+11.99811
+        else: 
+            print("\033[31mr value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
+            return 7
+        # else: 
+        #     raise KcOutofBounds(
+        #         "\033[31m r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r)
+        #     )
     def V(y):
         return np.interp(y, spanwise_position, loads[0][0], 0)
     def Mx(y): 
         return np.interp(y, spanwise_position, loads[0][1], 0)
     def T(y): 
         return np.interp(y, spanwise_position, loads[0][2], 0)
-    def K_s(a, b): #a is the long side, b is the short side!
+    def K_s(a, b): #a is the long side, b is the short side! clamped edges
         r = a/b
         return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
 
@@ -78,7 +88,7 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_cr = (np.pi**2 * ks * E) / (12 * (1 - nu**2)) * (t / b)**2
         return tau_cr
     
-    def sigma_cr(kc, t, b, E = 72.4*10**9, nu=0.33):
+    def sigma_cr(kc, t, b, E = 72.4e9, nu=0.33):
         sigma_cr = (np.pi**2 * kc * E) / (12 * (1 - nu**2)) * (t / b)**2
         return sigma_cr
     
@@ -110,45 +120,65 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
     # print(stringers_pos)
     # print(trapezoid)
     # print(stringers_pos)
-    for i in range(len(ribs[:,1])-1):
-        rib1 = ribs[i,:]
-        chord1 = interp_chord(rib1[1])
-        stringers1 = stringers_pos * chord1
-        # print(stringers1)
-        panel1 = stringers1[int(len(stringers1)/2)-2:int(len(stringers1)/2), :] #we assume that the max stress occurs at trailing edge of the wingbox
-        # print(stringers1)
-        # print(panel1)
-        panel1_len = np.linalg.norm(panel1[1,:]-panel1[0,:])
-        
-        rib2 = ribs[i+1,:]
-        chord2 = interp_chord(rib2[1])
-        stringers2 = stringers_pos * chord2
-        panel2 = stringers2[int(len(stringers2)/2)-2:int(len(stringers2)/2), :]
-        panel2_len = np.linalg.norm(panel2[1,:]-panel2[0,:])
-        
-        b = (panel1_len+panel2_len)/2 #short side of panel for buckling analysis
-        print(a, b)
-        
-        I = Ixx_interp(rib2[1])
-        M = Mx(ribs[i+1,1])
-        y_max = abs(trapezoid[1,1]*ribs[i+1,0])
-        norm_stress =  (M * y_max)/(I)
-        
-        avg_stress = 0 #shear force divided by (front spar height times thickness, plus rear spar height times thickness)
-        shear_stress = 1.5 * avg_stress #assumed that only the spar webs carry any shear flow due to the shear force
+    print("\n\033[01mConsidering the trailing edge panels as the most critical ones.\033[0m")
+    with alive_bar(len(ribs[:,1])-1, title= "\033[96m {} \033[00m".format("WP5.1:"), bar='smooth', spinner='classic') as bar:
+        for i in range(len(ribs[:,1])-1):
+            rib1 = ribs[i,:]
+            chord1 = interp_chord(rib1[1])
+            stringers1 = stringers_pos * chord1
+            # print(stringers1)
+            panel1 = stringers1[int(len(stringers1)/2)-2:int(len(stringers1)/2), :] #we assume that the max stress occurs at trailing edge of the wingbox
+            # print(stringers1)
+            # print(panel1)
+            panel1_len = np.linalg.norm(panel1[1,:]-panel1[0,:])
+            
+            rib2 = ribs[i+1,:]
+            chord2 = interp_chord(rib2[1])
+            stringers2 = stringers_pos * chord2
+            panel2 = stringers2[int(len(stringers2)/2)-2:int(len(stringers2)/2), :]
+            panel2_len = np.linalg.norm(panel2[1,:]-panel2[0,:])
+            
+            b = (panel1_len+panel2_len)/2 #short side of panel for buckling analysis
+            print(a, b)
+            
+            I = Ixx_interp(rib2[1])
+            M = Mx(ribs[i+1,1])
+            y_max = abs(trapezoid[1,1]*ribs[i+1,0])
+            norm_stress =  -(M * y_max)/(I)
+            
+            avg_stress = 0 #shear force divided by (front spar height times thickness, plus rear spar height times thickness)
+            shear_stress = 1.5 * avg_stress #assumed that only the spar webs carry any shear flow due to the shear force
 
-        Ks = K_s(a,b) #a is long side, b is short side
-        Kc = K_c(a,b)
-        shear_buckling_stress = critical_shear_stress(Ks, design.hspar_thickness, b)
-        column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, a)
-        skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness,b)
-        
+            Ks = K_s(a,b) #a is long side, b is short side
+            Kc = K_c(a,b)
+            shear_buckling_stress = critical_shear_stress(Ks, design.hspar_thickness, b)
+            column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, a)
+            skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness,b)
+            
+            print("\033[36mNormal stress:\033[0m {:e}".format(norm_stress))
+            
+            print("Shear Buckling Critical Stress: {:e}".format(shear_buckling_stress), end="")
+            if norm_stress < shear_buckling_stress:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
+            print("Column Buckling Critical Stress: {:e}".format(column_buckling_stress), end="")
+            if norm_stress < column_buckling_stress:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
+            print("Skin Buckling Critical Stress: {:e}".format(skin_buckling_stress), end="")
+            if norm_stress < skin_buckling_stress:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
+            bar()
 
-        # plt.plot(current_trapezoid[:,0], current_trapezoid[:,1], 'o')
-        # plt.plot(current_stringers[:,0], current_stringers[:,1], 'o')
-        # plt.ylim(-3,3)
-        # plt.gca().set_aspect("equal", adjustable='box')
-        # plt.show()
+            # plt.plot(current_trapezoid[:,0], current_trapezoid[:,1], 'o')
+            # plt.plot(current_stringers[:,0], current_stringers[:,1], 'o')
+            # plt.ylim(-3,3)
+            # plt.gca().set_aspect("equal", adjustable='box')
+            # plt.show()
 
 
 if __name__ == "__main__":

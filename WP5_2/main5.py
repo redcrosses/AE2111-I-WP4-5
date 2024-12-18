@@ -120,7 +120,7 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
     # plt.tight_layout()
     # plt.show()
 
-    print(moment_list)
+    # print(moment_list)
 
     return margin_of_safety_list.tolist(), M_max
 

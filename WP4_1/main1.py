@@ -248,7 +248,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
 
     # Adjust layout
     fig.tight_layout()
-    plt.show(block = False)
+    # plt.show(block = False)
     
     results_pos = [
         list(results["Positive Load Factor (n=2.5)"]["shear_force"]),

@@ -1,4 +1,4 @@
-def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, numberofstringers:float, stringerarea: float, stringer_width=0.03, stringer_height=0.03, thickness_1=0.001, thickness_2=0.001): #loads is a tuple, where the first element is positive loads, second element is negative loads
+def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, ribspacing: float, numberofstringers:float, stringer_width=0.03, stringer_height=0.03, thickness_1=0.001, thickness_2=0.001): #loads is a tuple, where the first element is positive loads, second element is negative loads
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
@@ -6,6 +6,15 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
     from WP4_2.centroid import centroid_of_quadrilateral
     import WP4_2.points_intersection
     from alive_progress import alive_bar
+    print("\n\033[1m\033[4mCurrent Design:\033[0m")
+    print("Load Distribution: {}\nFront Spar Length: {:.3f} [m]\nRear Spar Length: {:.3f} [m]\nHorizontal Spar Thickness: {:.3f} [m]\nVertical Spar Thickness: {:.3f} [m]\nRib Spacing: {:.3f} [m]\nNumber of Stringers: {:.1f}\nStringer Width: {:.3f} [m]\nStringer Height: {:.3f} [m]\nThickness 1: {:.3f} [m]\nThickness 2: {:.3f} [m]\n".format(
+        n_tuple,
+        frontsparlength, rearsparlength,
+        horizontalsparthickness, verticalsparthickness,
+        ribspacing, numberofstringers,
+        stringer_width, stringer_height,
+        thickness_1, thickness_2
+    ))
 
     #Constraints
     #- The wing tip displacement should not exceed 15% of the total span of the wing.
@@ -100,7 +109,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
         return I_yy_1 + I_yy_2 + I_yy_3 + I_yy_4 + I_stringers
 
     class design():
-        def __init__(self, frontsparlength, rearsparlength, hspar_thickness, vspar_thickness, n_stringers, stringer_area):
+        def __init__(self, frontsparlength, rearsparlength, hspar_thickness, vspar_thickness, n_stringers):
             self.span_positions = np.linspace(0, 27.47721/2, 100)
             self.rootchord = 5.24140
             self.tipchord = 1.57714
@@ -124,9 +133,28 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                 Ixx_stringer =  Area_parallel * y_centroid_stringer ** 2 + (1/12) * length_2 ** 3 * thickness_2 + Area_perpendicular * (length_2-y_centroid_stringer) ** 2
                 Iyy_stringer =  Area_perpendicular * x_centroid_stringer ** 2 + (1/12) * length_1 ** 3 * thickness_1 + Area_parallel * (length_1-x_centroid_stringer) ** 2
 
-                return Ixx_stringer, Iyy_stringer, Area_perpendicular, Area_parallel, Total_area_stringer
-            self.Ixx_stringer, self.Iyy_stringer, Area_perpendicular, Area_parallel, self.Total_area_stringer = stringer_sizing(stringer_width, stringer_height, thickness_1, thickness_2)
-    
+                return Ixx_stringer, Iyy_stringer, Total_area_stringer
+            
+            def ribsget(rib_spacing: float):
+                pos = 0
+                ribs = np.empty((1,2))
+                while pos<max(self.chords_along_span[:,1]):
+                    # print(pos)
+                    # print(ribs)
+                    chord = interp_chord(pos)
+                    # print([chord, pos])
+                    ribs = np.vstack((ribs, [chord,pos]))
+                    pos+=rib_spacing
+                    
+                ribs = ribs[1::,:]
+                return ribs, rib_spacing
+            def interp_chord(z): #span input
+                return np.interp(z, self.chords_along_span[:,1], self.chords_along_span[:,0])
+            
+            self.Ixx_stringer, self.Iyy_stringer, self.Total_area_stringer = stringer_sizing(stringer_width, stringer_height, thickness_1, thickness_2)
+            self.ribspacing = ribspacing
+            self.ribs, self.a = ribsget(self.ribspacing)  #returns chord then span placement
+
             with alive_bar(self.span_positions.shape[0]*2, title= "\033[96m {} \033[00m".format("WP4.2:"), bar='smooth', spinner='classic') as bar:
                 for i in range(len(loads)):
                     self.boxes = []
@@ -153,7 +181,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                         # print(box.unitcentroid)
                         box.makestringers(self.n_stringers,0.95)
                         moi_x: float = MOI_x(box, self.Total_area_stringer, box.stringers, box.hspar_thickness, box.vspar_thickness) + self.Ixx_stringer*self.n_stringers
-                        moi_y: float = MOI_y(box, self.Total_area_stringer, box.stringers, box.hspar_thickness, vspar_thickness)
+                        moi_y: float = MOI_y(box, self.Total_area_stringer, box.stringers, box.hspar_thickness, box.vspar_thickness) + self.Iyy_stringer*self.n_stringers
                         j = moi_x + moi_y + self.Iyy_stringer*self.n_stringers
                         self.moi_x_list.append(moi_x)
                         self.moi_y_list.append(moi_y)
@@ -194,17 +222,14 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
             # print(self.displacements)
         def graph(self):
                 fig1 = plt.figure(figsize=(7, 10))
-                # print(self.boxes[1].trapezoid)
                 trapezoids_sized = np.vstack([np.append(self.boxes[0].trapezoid, [self.boxes[0].trapezoid[0]], axis=0), 
                                             np.append(self.boxes[1].trapezoid, [self.boxes[1].trapezoid[0]], axis=0)])
-                # print(trapezoids_sized)
                 #vvv first subplot vvv
                 ax3d = fig1.add_subplot(2, 1, 1, projection='3d')  # First column
-                ax3d.set(xlim3d=[0, 15], ylim3d=[0, 3], zlim3d=[0, 30], box_aspect=(3, 3/5, 6))
+                ax3d.set(xlim3d=[0, 10], ylim3d=[0, 3], zlim3d=[0, 15], box_aspect=(2, 3/5, 3))
 
                 self.sweep = np.radians(25)
                 # #airfoil
-                airfoil = np.empty([1,2])
                 data = np.loadtxt("WP4_2/fx60126.dat")
                 airfoil_x = data[:,0]
                 airfoil_y = data[:,1]
@@ -214,24 +239,34 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                 ax2d.set_aspect("equal")
                 ax2d.plot(airfoil_x*self.rootchord, airfoil_y*self.rootchord)
                 ax2d.plot(trapezoids_sized[:5,0], trapezoids_sized[:5,1])
+                ax2d.plot(self.stringers[:,0]*self.rootchord, self.stringers[:,1]*self.rootchord,"ro")
 
-                airfoil_x = np.vstack([airfoil_x*self.rootchord, airfoil_x*self.tipchord + 27.47721*np.sin(self.sweep)])
+                for rib in self.ribs:
+                    ax3d.plot(airfoil_x*rib[0] + np.sin(self.sweep)*rib[1], airfoil_y*rib[0], np.full_like(airfoil_x, rib[1]), "r", antialiased=True)
+                
+                for i in range(len(self.stringers[:,0])):
+                    stringer = self.stringers[i,:]
+                    ax3d.plot([stringer[0]*self.rootchord, stringer[0]*self.tipchord + np.sin(self.sweep)*27.47721/2],
+                              [stringer[1]*self.rootchord, stringer[1]*self.tipchord], 
+                              [0, 27.47721/2], "r")
+
+                airfoil_x = np.vstack([airfoil_x*self.rootchord, airfoil_x*self.tipchord + 27.47721/2*np.sin(self.sweep)])
                 airfoil_y = np.vstack([airfoil_y*self.rootchord, airfoil_y*self.tipchord])
-                airfoil_z = np.vstack([airfoil_z, np.full_like(airfoil_z, 27.47721)])
+                airfoil_z = np.vstack([airfoil_z, np.full_like(airfoil_z, 27.47721/2)])
 
                 x,y = trapezoids_sized[:5,0], trapezoids_sized[:5,1]
                 z = np.zeros(x.shape) #every four points in trapezoid_sized is one trapezoid box
 
-                x = np.vstack([x, trapezoids_sized[5:,0] + np.sin(self.sweep)*27.47721]) 
+                x = np.vstack([x, trapezoids_sized[5:,0] + np.sin(self.sweep)*27.47721/2]) 
                 y = np.vstack([y, trapezoids_sized[5:,1]])
-                z = np.vstack([z, np.full_like(z,27.47721)])
+                z = np.vstack([z, np.full_like(z,27.47721/2)])
                 # print(x,y,x.shape)
 
                 airfoil = ax3d.plot_surface(airfoil_x, airfoil_y, airfoil_z, linewidth=0, alpha=0.25)
-                surface = ax3d.plot_surface(x, y, z, alpha=1, linewidth=0,antialiased=False)
+                surface = ax3d.plot_surface(x, y, z, alpha=0.5, linewidth=0)
 
                 fig1.tight_layout()
-                plt.show(block = False)
+                # plt.show(block = False)
                 
                 # #vvv second subplot vvv
                 fig2 = plt.figure(figsize=(15,10))
@@ -276,32 +311,36 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                     ax_torsion.grid()
 
                 fig2.tight_layout()
-                plt.show()
+                # plt.show(block=False)
+
         def max(self):
-            print("positive bending: ", self.displacements[0][0][-1], end="")
+            print("\n\033[1m\033[4mBending/Torsion Requirements:\033[0m")
+            print("\033[1mDisplacement Requirement\033[0m: +/-", self.disp_req, "[m]")
+            print("Positive bending: ", self.displacements[0][0][-1], "[m]", end="")
             if self.displacements[0][0][-1] < self.disp_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-            print("negative bending: ", self.displacements[1][0][-1], end="")
+            print("Negative bending: ", self.displacements[1][0][-1], "[m]", end="")
             if self.displacements[1][0][-1] > -1*self.disp_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-            print("positive torsion: ", self.displacements[0][1][-1], end="")
+            
+            print("\n\033[1mTwist Requirement\033[0m: -/+", self.twist_req, "[rad]")
+            print("Positive torsion: ", self.displacements[0][1][-1], "[rad]", end="")
             if self.displacements[0][1][-1] > -1*self.twist_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
-            print("negative torsion: ", self.displacements[1][1][-1], end="")
+            print("Negative torsion: ", self.displacements[1][1][-1], "[rad]", end="")
             if self.displacements[1][1][-1] < 1*self.twist_req:
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
             # print("\n")
-    design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers, stringerarea) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, stringer area, number of stringers
+    design = design(frontsparlength, rearsparlength, horizontalsparthickness, verticalsparthickness, numberofstringers) #front spar length, rear spar length, horizontal spar thickness, vertical spar thickness, number of stringers
     design.max()
-    # design.graph()
     # design.moi_x_list, design.trapezoid, design.stringers, design.chords_along_span
     return design
 

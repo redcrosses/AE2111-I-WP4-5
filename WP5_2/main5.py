@@ -66,7 +66,7 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    # plt.show(block=False)
 
     # import numpy as np
     # import matplotlib.pyplot as plt

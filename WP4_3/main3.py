@@ -87,7 +87,7 @@ def main3():
 	plt.legend()
 	plt.ylim(n_min - 0.5, n_max + 0.5)
 	plt.xlim(0, Vd + 10)
-	plt.show(block = False)
+	# plt.show(block = False)
 
 
 	plt.legend(loc="center left", bbox_to_anchor =(1.05,0.5))

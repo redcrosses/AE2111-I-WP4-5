@@ -5,6 +5,7 @@ class KcOutofBounds(Exception):
     pass
 
 def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design: object):
+    ribspacing = design.ribspacing
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
         if r >0.68 and r<=1.12:
@@ -98,29 +99,11 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
     def Ixx_interp(z):
         return np.interp(z, spanwise_position, I_xx)
     
-    def ribsget(rib_spacing: float):
-        pos = 0
-        ribs = np.empty((1,2))
-        while pos<max(chord_and_span[:,1]):
-            # print(pos)
-            # print(ribs)
-            chord = interp_chord(pos)
-            # print([chord, pos])
-            ribs = np.vstack((ribs, [chord,pos]))
-            pos+=rib_spacing
-            
-        ribs = ribs[1::,:]
-        return ribs, rib_spacing
-    
-    ribs, a = ribsget(2) #2 meter spacing; returns chord then span placement
-    # print(ribs_placement)
-    # print(stringers_pos)
-    # print(trapezoid)
-    # print(stringers_pos)
+    print("\n\033[1m\033[4mBuckling Analysis33[0m")
     print("\n\033[01mConsidering the trailing edge panels as the most critical ones.\033[0m")
-    with alive_bar(len(ribs[:,1])-1, title= "\033[96m {} \033[00m".format("WP5.1:"), bar='smooth', spinner='classic') as bar:
-        for i in range(len(ribs[:,1])-1):
-            rib1 = ribs[i,:]
+    with alive_bar(len(design.ribs[:,1])-1, title= "\033[96m {} \033[00m".format("WP5.1:"), bar='smooth', spinner='classic') as bar:
+        for i in range(len(design.ribs[:,1])-1):
+            rib1 = design.ribs[i,:]
             chord1 = interp_chord(rib1[1])
             stringers1 = stringers_pos * chord1
             # print(stringers1)
@@ -129,28 +112,28 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             # print(panel1)
             panel1_len = np.linalg.norm(panel1[1,:]-panel1[0,:])
             
-            rib2 = ribs[i+1,:]
+            rib2 = design.ribs[i+1,:]
             chord2 = interp_chord(rib2[1])
             stringers2 = stringers_pos * chord2
             panel2 = stringers2[int(len(stringers2)/2)-2:int(len(stringers2)/2), :]
             panel2_len = np.linalg.norm(panel2[1,:]-panel2[0,:])
             
-            b = (panel1_len+panel2_len)/2 #short side of panel for buckling analysis
-            print(a, b)
+            design.b = (panel1_len+panel2_len)/2 #short side of panel for buckling analysis
+            # print(design.a, design.b)
             
             I = Ixx_interp(rib2[1])
-            M = Mx(ribs[i+1,1])
-            y_max = abs(trapezoid[1,1]*ribs[i+1,0])
+            M = Mx(design.ribs[i+1,1])
+            y_max = abs(trapezoid[1,1]*design.ribs[i+1,0])
             norm_stress =  -(M * y_max)/(I)
             
             avg_stress = 0 #shear force divided by (front spar height times thickness, plus rear spar height times thickness)
             shear_stress = 1.5 * avg_stress #assumed that only the spar webs carry any shear flow due to the shear force
 
-            Ks = K_s(a,b) #a is long side, b is short side
-            Kc = K_c(a,b)
-            shear_buckling_stress = critical_shear_stress(Ks, design.hspar_thickness, b)
-            column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, a)
-            skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness,b)
+            Ks = K_s(design.a,design.b) #a is long side, b is short side
+            Kc = K_c(design.a,design.b)
+            shear_buckling_stress = critical_shear_stress(Ks, design.hspar_thickness, design.b)
+            column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, design.a)
+            skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness, design.b)
             
             print("\033[36mNormal stress:\033[0m {:e}".format(norm_stress))
             

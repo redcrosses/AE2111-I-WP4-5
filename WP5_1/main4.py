@@ -7,19 +7,16 @@ class KcOutofBounds(Exception):
 def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_position, design: object):
     def K_c(a,b): # curve fit for skin buckling coefficient Kc
         r=a/b
-        if r >0.69 and r<=1.12:
-            return -104.20542*r**4+357.54147*r**3-411.62491*r**2+165.89543*r
+        if r >0.68 and r<=1.12:
+            return -95.34887*r**4+332.1724*r**3-390.21686*r**2+163.70145*r
         elif r<=1.81:
-            return -8.25872*r**4+45.66709*r**3-86.31837*r**2+60.2625*r
+            return -7.39598*r**4+41.65687*r**3-80.1233*r**2+57.06951*r
         elif r<=5:
-            return 0.049532*r**4-0.782365*r**3+4.59504*r**2-11.99811*r+11.99811
-        else: 
+            return 0.0346329*r**4-0.557788*r**3+3.35053*r**2-9.00218*r+16.53865
+        elif r>5:
             print("\033[31mr value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
-            return 7
-        # else: 
-        #     raise KcOutofBounds(
-        #         "\033[31m r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r)
-        #     )
+            return 0.0346329*5**4-0.557788*5**3+3.35053*5**2-9.00218*5+16.53865
+        
     def V(y):
         return np.interp(y, spanwise_position, loads[0][0], 0)
     def Mx(y): 

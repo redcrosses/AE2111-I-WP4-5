@@ -63,6 +63,7 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
         axes[load_case].set_title(f"Load Case {load_case + 1}", fontsize=14)
         axes[load_case].legend()
         axes[load_case].grid(True)
+        axes[load_case].set_ylim(0, None)
 
     # Adjust layout and show the plot
     plt.tight_layout()

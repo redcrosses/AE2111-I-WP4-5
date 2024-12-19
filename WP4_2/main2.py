@@ -1,4 +1,4 @@
-def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, ribspacing: float, numberofstringers:float, stringer_width=0.03, stringer_height=0.03, thickness_1=0.001, thickness_2=0.001): #loads is a tuple, where the first element is positive loads, second element is negative loads
+def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, rearsparlength: float, horizontalsparthickness: float, verticalsparthickness: float, ribspacing: float, numberofstringers:float, stringer_width=0.03, stringer_height=0.03, thickness_1=0.001, thickness_2=0.001): #loads is a tuple, where the first element is positive loads, second element is negative loads
     import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.gridspec import GridSpec
@@ -6,7 +6,7 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
     from WP4_2.centroid import centroid_of_quadrilateral
     import WP4_2.points_intersection
     from alive_progress import alive_bar
-    print("\n\033[1m\033[4mCurrent Design:\033[0m")
+    print("\n\033[1m\033[4mDesign Number: {0}\033[0m".format(designnumber))
     print("Load Distribution: {}\nFront Spar Length: {:.3f} [m]\nRear Spar Length: {:.3f} [m]\nHorizontal Spar Thickness: {:.3f} [m]\nVertical Spar Thickness: {:.3f} [m]\nRib Spacing: {:.3f} [m]\nNumber of Stringers: {:.1f}\nStringer Width: {:.3f} [m]\nStringer Height: {:.3f} [m]\nThickness 1: {:.3f} [m]\nThickness 2: {:.3f} [m]\n".format(
         n_tuple,
         frontsparlength, rearsparlength,
@@ -220,11 +220,57 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                     
             # print(self.boxes[])
             # print(self.displacements)
-        def graph(self):
-                fig1 = plt.figure(figsize=(7, 10))
+
+        def graph_displacements(self):
+            # #vvv first subplot vvv
+                fig2 = plt.figure(figsize=(15,10))
+                gs = GridSpec(2, 3, figure=fig2, width_ratios=[1, 2, 2], height_ratios=[1, 1])            # print(self.boxes[0].trapezoid)
+                # Spanwise second moment of inertia (2D plots)
+                ax_moi_x = fig2.add_subplot(gs[0, 0])  
+                ax_moi_x.plot(self.span_positions, self.moi_x_list, label="MOI_x", color='blue')
+                ax_moi_x.set_title("Spanwise MOI_x")
+                ax_moi_x.set_xlabel("Spanwise position (m)")
+                ax_moi_x.set_ylabel("MOI_xx (m^4)")
+                ax_moi_x.legend()
+                ax_moi_x.grid()
+
+                ax_moi_y = fig2.add_subplot(gs[1, 0])  
+                ax_moi_y.plot(self.span_positions, self.j_list, label="J", color='red')
+                ax_moi_y.set_title("Spanwise J")
+                ax_moi_y.set_xlabel("Spanwise position (m)")
+                ax_moi_y.set_ylabel("J (m^4)")
+                ax_moi_y.legend()
+                ax_moi_y.grid()
+                for i in range(len(self.displacements)):
+                    # Bending displacement pos
+                    ax_bending = fig2.add_subplot(gs[0, i+1])  
+                    ax_bending.plot(self.span_positions, self.displacements[i][0], label="Bending for n="+str(n_tuple[i]), color='blue')
+                    ax_bending.plot(self.span_positions, np.sign(n_tuple[i])*self.disp_req*np.ones_like(self.span_positions), '--r', label='Displacement requirement')
+                    ax_bending.set_title("Bending Displacement for n="+str(n_tuple[i]))
+                    ax_bending.set_xlabel("Spanwise position (m)")
+                    ax_bending.set_ylabel("Displacement (m)")
+                    ax_bending.set_ylim(-5,5)
+                    ax_bending.set_aspect("equal")
+                    ax_bending.legend()
+                    ax_bending.grid()
+
+                    # Torsional twist pos
+                    ax_torsion = fig2.add_subplot(gs[1, i+1])  
+                    ax_torsion.plot(self.span_positions, self.displacements[i][1], label="Twist for n="+str(n_tuple[i]), color='red')
+                    ax_torsion.plot(self.span_positions, -1*np.sign(n_tuple[i])*self.twist_req*np.ones_like(self.span_positions), '--r', label='Twist angle requirement')
+                    ax_torsion.set_title("Torsional Twist for n="+str(n_tuple[i]))
+                    ax_torsion.set_xlabel("Spanwise position (m)")
+                    ax_torsion.set_ylabel("Twist (rad)")
+                    ax_torsion.legend()
+                    ax_torsion.grid()
+                fig2.tight_layout()
+
+        def graph_visualized_and_dash(self):
                 trapezoids_sized = np.vstack([np.append(self.boxes[0].trapezoid, [self.boxes[0].trapezoid[0]], axis=0), 
                                             np.append(self.boxes[1].trapezoid, [self.boxes[1].trapezoid[0]], axis=0)])
-                #vvv first subplot vvv
+
+                #vvv second subplot vvv
+                fig1 = plt.figure(figsize=(7, 10))
                 ax3d = fig1.add_subplot(2, 1, 1, projection='3d')  # First column
                 ax3d.set(xlim3d=[0, 10], ylim3d=[0, 3], zlim3d=[0, 15], box_aspect=(2, 3/5, 3))
 
@@ -268,50 +314,6 @@ def main2(loads: tuple, span_pos: list, n_tuple: tuple, frontsparlength: float, 
                 fig1.tight_layout()
                 # plt.show(block = False)
                 
-                # #vvv second subplot vvv
-                fig2 = plt.figure(figsize=(15,10))
-                gs = GridSpec(2, 3, figure=fig2, width_ratios=[1, 2, 2], height_ratios=[1, 1])            # print(self.boxes[0].trapezoid)
-                # Spanwise second moment of inertia (2D plots)
-                ax_moi_x = fig2.add_subplot(gs[0, 0])  
-                ax_moi_x.plot(self.span_positions, self.moi_x_list, label="MOI_x", color='blue')
-                ax_moi_x.set_title("Spanwise MOI_x")
-                ax_moi_x.set_xlabel("Spanwise position (m)")
-                ax_moi_x.set_ylabel("MOI_xx (m^4)")
-                ax_moi_x.legend()
-                ax_moi_x.grid()
-
-                ax_moi_y = fig2.add_subplot(gs[1, 0])  
-                ax_moi_y.plot(self.span_positions, self.j_list, label="J", color='red')
-                ax_moi_y.set_title("Spanwise J")
-                ax_moi_y.set_xlabel("Spanwise position (m)")
-                ax_moi_y.set_ylabel("J (m^4)")
-                ax_moi_y.legend()
-                ax_moi_y.grid()
-                for i in range(len(self.displacements)):
-                    # Bending displacement pos
-                    ax_bending = fig2.add_subplot(gs[0, i+1])  
-                    ax_bending.plot(self.span_positions, self.displacements[i][0], label="Bending for n="+str(n_tuple[i]), color='blue')
-                    ax_bending.plot(self.span_positions, np.sign(n_tuple[i])*self.disp_req*np.ones_like(self.span_positions), '--r', label='Displacement requirement')
-                    ax_bending.set_title("Bending Displacement for n="+str(n_tuple[i]))
-                    ax_bending.set_xlabel("Spanwise position (m)")
-                    ax_bending.set_ylabel("Displacement (m)")
-                    ax_bending.set_ylim(-5,5)
-                    ax_bending.set_aspect("equal")
-                    ax_bending.legend()
-                    ax_bending.grid()
-
-                    # Torsional twist pos
-                    ax_torsion = fig2.add_subplot(gs[1, i+1])  
-                    ax_torsion.plot(self.span_positions, self.displacements[i][1], label="Twist for n="+str(n_tuple[i]), color='red')
-                    ax_torsion.plot(self.span_positions, -1*np.sign(n_tuple[i])*self.twist_req*np.ones_like(self.span_positions), '--r', label='Twist angle requirement')
-                    ax_torsion.set_title("Torsional Twist for n="+str(n_tuple[i]))
-                    ax_torsion.set_xlabel("Spanwise position (m)")
-                    ax_torsion.set_ylabel("Twist (rad)")
-                    ax_torsion.legend()
-                    ax_torsion.grid()
-
-                fig2.tight_layout()
-                # plt.show(block=False)
                 while 69:
                     inp = input("View Graphs? [y/n] ")
                     try:

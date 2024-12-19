@@ -18,8 +18,14 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             print("\033[31mr value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
             return 0.0346329*5**4-0.557788*5**3+3.35053*5**2-9.00218*5+16.53865
         
-    def V(y):
-        return np.interp(y, spanwise_position, loads[0][0], 0)
+    def Vz(y,load_case=0):
+        V = np.interp(y, spanwise_position, loads[0][0], 0)
+        if V == 0:
+            non_zero_values = np.array(loads[load_case][0])[np.array(loads[load_case][0]) != 0]
+            closest_index = np.argmin(np.abs(np.array(spanwise_position) - y))
+            V = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][1][closest_index]))]
+
+        return V
     def Mx(y, load_case=0):
         # Interpolate the moment along the spanwise position for the given load case
         moment = np.interp(y, spanwise_position, loads[load_case][1], left=0, right=0)
@@ -41,36 +47,29 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         else:
             return 136.31117 - 378.14535*5 + 497.60785*5**2 - 366.68125*5**3 + 163.8237*5**4 - 45.33579*5**5 + 7.595018*5**6  - 0.7056433*5**7 + 0.02790314*5**8
 
-
-
     # Shear buckling critical stress
     def critical_shear_stress(ks, t, b, E=72.4 * 10 ** 9, nu=0.33):
         tau_cr = (np.pi ** 2 * ks * E) / (12 * (1 - nu ** 2)) * (t / b) ** 2
         return tau_cr
 
-    def enclosed_area():
-        frontlength = design.chords_along_span[:, 0] * design.frontsparlength
-        rearlength = design.chords_along_span[:, 0] * design.rearsparlength
-        width = design.chords_along_span[:, 0] * design.width
-        area = (frontlength + rearlength) / 2 * width
+    def enclosed_area(front, rear, width):
+        area = (front + rear) / 2 * width
         return area
     
-    def torsion_shear_stress():
-        tau_s = T(design.chords_along_span[:,1])/(2*enclosed_area()*design.vspar_thickness)
+    def torsion_shear_stress(front, rear, width, y):
+        tau_s = T(y)/(2*enclosed_area(front, rear, width)*design.vspar_thickness)
         return tau_s
     
-    def maxshear():
-        frontlength = design.chords_along_span[:,0]*design.frontsparlength
-        rearlength = design.chords_along_span[:,0]*design.rearsparlength
-        averageshear = V(design.chords_along_span[:,1])/((frontlength+rearlength)*design.vspar_thickness)
+    def maxshear(front, rear, y):
+        averageshear = Vz(y)/((front+rear)*design.vspar_thickness)
         return 1.5*averageshear
 
-    def left_spar_shear_stress():
-        tau_left = maxshear()-torsion_shear_stress()
+    def left_spar_shear_stress(front, rear, width, y):
+        tau_left = maxshear(front, rear, y)-torsion_shear_stress(front, rear, width, y)
         return tau_left
 
-    def right_spar_shear_stress():
-        tau_right = maxshear()+torsion_shear_stress()
+    def right_spar_shear_stress(front, rear, width, y):
+        tau_right = maxshear(front, rear, y)+torsion_shear_stress(front, rear, width, y)
         return tau_right
 
     # Column buckling critical stress
@@ -79,10 +78,6 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         E = 72.4*10**9
         critical_stress = (K*np.pi**2*E*MOI)/(L**2*A)
         return critical_stress
-
-    def tau_cr(ks, E, nu, t, b):
-        tau_cr = (np.pi**2 * ks * E) / (12 * (1 - nu**2)) * (t / b)**2
-        return tau_cr
     
     def sigma_cr(kc, t, b, E = 72.4e9, nu=0.33):
         sigma_cr = (np.pi**2 * kc * E) / (12 * (1 - nu**2)) * (t / b)**2
@@ -98,9 +93,9 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         return np.interp(z, spanwise_position, I_xx)
     
     print("\n\033[1m\033[4mBuckling Analysis\33[0m")
-    print("\033[01mConsidering the trailing edge panels as the most critical ones.\033[0m")
+    print("\033[01mConsidering the trailing edge panels as the most critical ones. All stresses are magnitudes.\033[0m")
     with alive_bar(len(design.ribs[:,1])-1, title= "\033[96m {} \033[00m".format("WP5.1:"), bar='smooth', spinner='classic') as bar:
-        design.stresses = np.empty((1,4))
+        design.safetyfactors = np.empty((1,5))
         for i in range(len(design.ribs[:,1])-1):
             rib1 = design.ribs[i,:]
             chord1 = interp_chord(rib1[1])
@@ -122,22 +117,34 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             
             I = Ixx_interp(rib1[1])
             M = Mx(rib1[1])
+            V = Vz(rib1[1])
             y_max = abs(trapezoid[1,1]*rib1[0])
             norm_stress =  -(M * y_max)/(I)
             
-            avg_stress = 0 #shear force divided by (front spar height times thickness, plus rear spar height times thickness)
-            shear_stress = 1.5 * avg_stress #assumed that only the spar webs carry any shear flow due to the shear force
+            shear_stress_front = left_spar_shear_stress(chord1*design.frontsparlength, chord1*design.rearsparlength, chord1*design.width, rib1[1])
+            # maxshear(chord1*design.frontsparlength, chord1*design.rearsparlength, V) #assumed that only the spar webs carry any shear flow due to the shear force
+            shear_stress_rear = right_spar_shear_stress(chord1*design.frontsparlength, chord1*design.rearsparlength, chord1*design.width, rib1[1])
 
-            Ks = K_s(design.a,design.b) #a is long side, b is short side
+            Ks_front = K_s(design.a, chord1*design.frontsparlength) #a is long side, b is short side
+            Ks_rear = K_s(design.a, chord1*design.rearsparlength) #a is long side, b is short side
             Kc = K_c(design.a,design.b)
-            shear_buckling_stress = critical_shear_stress(Ks, design.hspar_thickness, design.b)
-            column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, design.a)
+
+            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, design.b) #spars
+            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, design.b) #spars
+            column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, design.a) #top panels
             skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness, design.b)
             
             print("\033[36mNormal stress:\033[0m {:e}".format(norm_stress))
+            print("\033[36mShear stress (front web):\033[0m {:e}".format(shear_stress_front))
+            print("\033[36mShear stress (rear web):\033[0m {:e}".format(np.abs(shear_stress_rear)))
             
-            print("Shear Buckling Critical Stress: {:e}".format(shear_buckling_stress), end="")
-            if norm_stress < shear_buckling_stress:
+            print("Shear Buckling (front web) Critical Stress: {:e}".format(shear_buckling_stress_front), end="")
+            if shear_stress_front < shear_buckling_stress_front:
+                print("\033[32m Pass \033[0m")
+            else:
+                print("\033[31m Fail \033[0m")
+            print("Shear Buckling (rear web) Critical Stress: {:e}".format(shear_buckling_stress_rear), end="")
+            if np.abs(shear_stress_rear) < np.abs(shear_buckling_stress_rear):
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
@@ -154,13 +161,26 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             
             
             bar()
-            design.stresses = np.hstack((design.stresses, np.array([[rib1[1], shear_buckling_stress, column_buckling_stress, skin_buckling_stress]])))
-            # plt.plot(current_trapezoid[:,0], current_trapezoid[:,1], 'o')
-            # plt.plot(current_stringers[:,0], current_stringers[:,1], 'o')
-            # plt.ylim(-3,3)
-            # plt.gca().set_aspect("equal", adjustable='box')
-            # plt.show()
-        
+            design.safetyfactors = np.vstack((design.safetyfactors, np.array([[rib1[1], shear_buckling_stress_front/shear_stress_front, np.abs(shear_buckling_stress_rear)/shear_stress_rear, column_buckling_stress/norm_stress, skin_buckling_stress/norm_stress]])))
+
+        x = design.safetyfactors[:, 0]
+        num_columns = design.safetyfactors.shape[1]
+
+        #plotting
+        plt.figure(figsize=(10, 6))
+
+        plt.plot(x[1:], design.safetyfactors[1:, 0], label=f'Shear Buckling (front spar)')
+        plt.plot(x[1:], design.safetyfactors[1:, 1], label=f'Shear Buckling (rear spar)')
+        plt.plot(x[1:], design.safetyfactors[1:, 2], label=f'Column Buckling')
+        plt.plot(x[1:], design.safetyfactors[1:, 3], label=f'Skin Buckling')
+
+        plt.title("Buckling Margins of Safety")
+        plt.xlabel('Spanwise Position [m]')
+        plt.ylabel('Safety Factor [-]')
+        plt.ylim(0,15)
+        plt.legend()
+        # plt.yscale('log')
+        plt.grid(True)
 
 if __name__ == "__main__":
     pass

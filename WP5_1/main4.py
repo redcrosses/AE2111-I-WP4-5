@@ -36,7 +36,12 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         return np.interp(y, spanwise_position, loads[0][2], 0)
     def K_s(a, b): #a is the long side, b is the short side! clamped edges
         r = a/b
-        return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
+        if r <= 5:
+            return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
+        else:
+            return 136.31117 - 378.14535*5 + 497.60785*5**2 - 366.68125*5**3 + 163.8237*5**4 - 45.33579*5**5 + 7.595018*5**6  - 0.7056433*5**7 + 0.02790314*5**8
+
+
 
     # Shear buckling critical stress
     def critical_shear_stress(ks, t, b, E=72.4 * 10 ** 9, nu=0.33):

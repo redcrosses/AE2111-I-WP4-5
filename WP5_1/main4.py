@@ -15,7 +15,7 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         elif r<=5:
             return 0.0346329*r**4-0.557788*r**3+3.35053*r**2-9.00218*r+16.53865
         elif r>5:
-            print("\033[31mr value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
+            print("\033[31m K_c: r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
             return 0.0346329*5**4-0.557788*5**3+3.35053*5**2-9.00218*5+16.53865
         
     def Vz(y,load_case=0):
@@ -23,7 +23,7 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         if V == 0:
             non_zero_values = np.array(loads[load_case][0])[np.array(loads[load_case][0]) != 0]
             closest_index = np.argmin(np.abs(np.array(spanwise_position) - y))
-            V = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][1][closest_index]))]
+            V = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][0][closest_index]))]
 
         return V
     def Mx(y, load_case=0):
@@ -38,13 +38,19 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         
         # Ensure the moment meets the threshold requirement
         return moment
-    def T(y): 
+    def T(y, load_case=0): 
+        T = np.interp(y, spanwise_position, loads[0][2], 0)
+        if T == 0:
+            non_zero_values = np.array(loads[load_case][2])[np.array(loads[load_case][2]) != 0]
+            closest_index = np.argmin(np.abs(np.array(spanwise_position) - y))
+            T = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][2][closest_index]))]
         return np.interp(y, spanwise_position, loads[0][2], 0)
     def K_s(a, b): #a is the long side, b is the short side! clamped edges
         r = a/b
         if r <= 5:
             return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
         else:
+            print("\033[31m K_S: r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
             return 136.31117 - 378.14535*5 + 497.60785*5**2 - 366.68125*5**3 + 163.8237*5**4 - 45.33579*5**5 + 7.595018*5**6  - 0.7056433*5**7 + 0.02790314*5**8
 
     # Shear buckling critical stress
@@ -129,8 +135,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             Ks_rear = K_s(design.a, chord1*design.rearsparlength) #a is long side, b is short side
             Kc = K_c(design.a,design.b)
 
-            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, design.b) #spars
-            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, design.b) #spars
+            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, design.a) #spars
+            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, design.a) #spars
             column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, design.a) #top panels
             skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness, design.b)
             
@@ -159,20 +165,16 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             else:
                 print("\033[31m Fail \033[0m")
             
-            
             bar()
             design.safetyfactors = np.vstack((design.safetyfactors, np.array([[rib1[1], shear_buckling_stress_front/shear_stress_front, np.abs(shear_buckling_stress_rear)/shear_stress_rear, column_buckling_stress/norm_stress, skin_buckling_stress/norm_stress]])))
 
-        x = design.safetyfactors[:, 0]
-        num_columns = design.safetyfactors.shape[1]
-
         #plotting
         plt.figure(figsize=(10, 6))
-
-        plt.plot(x[1:], design.safetyfactors[1:, 0], label=f'Shear Buckling (front spar)')
-        plt.plot(x[1:], design.safetyfactors[1:, 1], label=f'Shear Buckling (rear spar)')
-        plt.plot(x[1:], design.safetyfactors[1:, 2], label=f'Column Buckling')
-        plt.plot(x[1:], design.safetyfactors[1:, 3], label=f'Skin Buckling')
+        plt.axhline(1, color="red", linestyle="--", label="Threshold")
+        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 1], label=f'Shear Buckling (front spar)')
+        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 2], label=f'Shear Buckling (rear spar)')
+        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 3], label=f'Column Buckling')
+        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 4], label=f'Skin Buckling')
 
         plt.title("Buckling Margins of Safety")
         plt.xlabel('Spanwise Position [m]')

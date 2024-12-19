@@ -33,8 +33,6 @@ def main3():
 	elif n_max>3.8:
 		n_max=3.8
 
-
-
 	# Define velocity range for plotting
 	V = np.linspace(0, Vd, 500)  # Speeds from 0 to Vd
 	n_positive = (V / Vs0) ** 2  # Positive load factor curve (clean configuration)

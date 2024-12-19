@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter1d
 from alive_progress import alive_bar
 class KcOutofBounds(Exception):
     pass
@@ -15,7 +16,7 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         elif r<=5:
             return 0.0346329*r**4-0.557788*r**3+3.35053*r**2-9.00218*r+16.53865
         elif r>5:
-            print("\033[31m K_c: r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
+            print("\033[31mK_c: r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
             return 0.0346329*5**4-0.557788*5**3+3.35053*5**2-9.00218*5+16.53865
         
     def Vz(y,load_case=0):
@@ -46,12 +47,15 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             T = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][2][closest_index]))]
         return T
     
-    def K_s(a, b): #a is the long side, b is the short side! clamped edges
+    def K_s(front, a, b): #a is the long side, b is the short side! clamped edges
         r = a/b
         if r <= 5:
             return 136.31117 - 378.14535*r + 497.60785*r**2 - 366.68125*r**3 + 163.8237*r**4 - 45.33579*r**5 + 7.595018*r**6  - 0.7056433*r**7 + 0.02790314*r**8
         else:
-            print("\033[31m K_S: r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
+            if front:
+                print("\033[31mK_S (front): r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
+            else:
+                print("\033[31mK_S (rear): r value is out of bounds (>5). a={:.3f}, b={:.3f}. K_c={:.3f} \033[0m".format(a,b,r))
             return 136.31117 - 378.14535*5 + 497.60785*5**2 - 366.68125*5**3 + 163.8237*5**4 - 45.33579*5**5 + 7.595018*5**6  - 0.7056433*5**7 + 0.02790314*5**8
 
     # Shear buckling critical stress
@@ -132,8 +136,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             # maxshear(chord1*design.frontsparlength, chord1*design.rearsparlength, V) #assumed that only the spar webs carry any shear flow due to the shear force
             shear_stress_rear = right_spar_shear_stress(chord1*design.frontsparlength, chord1*design.rearsparlength, chord1*design.width, rib1[1])
 
-            Ks_front = K_s(design.a, chord1*design.frontsparlength) #a is long side, b is short side
-            Ks_rear = K_s(design.a, chord1*design.rearsparlength) #a is long side, b is short side
+            Ks_front = K_s(True, design.a, chord1*design.frontsparlength) #a is long side, b is short side
+            Ks_rear = K_s(False, design.a, chord1*design.rearsparlength) #a is long side, b is short side
             Kc = K_c(design.a,design.b)
 
             shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, chord1*design.frontsparlength) #spars
@@ -170,27 +174,31 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             design.safetyfactors = np.vstack((design.safetyfactors, np.array([[rib1[1], shear_buckling_stress_front/shear_stress_front, np.abs(shear_buckling_stress_rear)/np.abs(shear_stress_rear), column_buckling_stress/norm_stress, skin_buckling_stress/norm_stress]])))
 
         #plotting
-        # Create a single figure
         fig, ax = plt.subplots(figsize=(10, 6))  # Create a single figure and axes
+        sigma = 0.1
+        x = design.safetyfactors[:, 0]
+        
+        y = design.safetyfactors[1:, 3]
+        y = gaussian_filter1d(y, sigma=sigma)
+        ax.plot(x[1:], y, linewidth=2, label='Column Buckling')
+        
+        y = design.safetyfactors[1:, 4]
+        y = gaussian_filter1d(y, sigma=sigma)
+        ax.plot(x[1:], y, linewidth=2, label='Skin Buckling')
+        
+        y = design.safetyfactors[1:, 1]
+        y = gaussian_filter1d(y, sigma=sigma)
+        ax.plot(x[1:], y, linewidth=2, label='Shear Buckling (front spar)')
+        
+        y = design.safetyfactors[1:, 2]
+        y = gaussian_filter1d(y, sigma=sigma)
+        ax.plot(x[1:], y, linewidth=2, label='Shear Buckling (rear spar)')
 
-        # Add horizontal threshold line
         ax.axhline(1, color="red", linestyle="--", label="Threshold")
-
-        # Plot all data on the same axes
-        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 3], label='Column Buckling')
-        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 4], label='Skin Buckling')
-        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 1], label='Shear Buckling (front spar)')
-        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 2], label='Shear Buckling (rear spar)')
-
-        # Set title and labels
         ax.set_title("Buckling Margins of Safety")
         ax.set_xlabel('Spanwise Position [m]')
         ax.set_ylabel('Safety Factor [-]')
-
-        # Set y-axis limits
         ax.set_ylim(0, 15)
-
-        # Add a legend and grid
         ax.legend()
         ax.grid(True)
 

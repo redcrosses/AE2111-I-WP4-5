@@ -13,9 +13,6 @@ if not sys.warnoptions:
 print("\033[96m {} \033[00m".format("WP4.3:"))
 print("Finding load factors")
 n_positive, n_negative = main3()
-print(n_positive)
-print(n_negative)
-
 print("Finding planform loading diagrams...")
 loads_positive, loads_negative, spanwise_position = main1(n_positive, n_negative)
 

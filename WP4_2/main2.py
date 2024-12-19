@@ -110,7 +110,7 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
 
     class design():
         def __init__(self, frontsparlength, rearsparlength, hspar_thickness, vspar_thickness, n_stringers):
-            self.span_positions = np.linspace(0, 27.47721/2, 100)
+            self.span_positions = np.linspace(0, 27.47721/2, 200)
             self.rootchord = 5.24140
             self.tipchord = 1.57714
             self.chords_along_span = np.column_stack((np.interp(self.span_positions, [0, 27.47721/2], [self.rootchord, self.tipchord]), self.span_positions))
@@ -288,12 +288,14 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
                 ax2d.plot(self.stringers[:,0]*self.rootchord, self.stringers[:,1]*self.rootchord,"ro")
 
                 for rib in self.ribs:
-                    ax3d.plot(airfoil_x*rib[0] + np.sin(self.sweep)*rib[1], airfoil_y*rib[0], np.full_like(airfoil_x, rib[1]), "r", antialiased=True)
+                    ax3d.plot(airfoil_x*rib[0] + np.sin(self.sweep)*rib[1], 
+                              airfoil_y*rib[0] * -1, 
+                              np.full_like(airfoil_x, rib[1]), "r", antialiased=True)
                 
                 for i in range(len(self.stringers[:,0])):
                     stringer = self.stringers[i,:]
                     ax3d.plot([stringer[0]*self.rootchord, stringer[0]*self.tipchord + np.sin(self.sweep)*27.47721/2],
-                              [stringer[1]*self.rootchord, stringer[1]*self.tipchord], 
+                              np.array([stringer[1]*self.rootchord, stringer[1]*self.tipchord]) * -1, 
                               [0, 27.47721/2], "r")
 
                 airfoil_x = np.vstack([airfoil_x*self.rootchord, airfoil_x*self.tipchord + 27.47721/2*np.sin(self.sweep)])
@@ -308,8 +310,8 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
                 z = np.vstack([z, np.full_like(z,27.47721/2)])
                 # print(x,y,x.shape)
 
-                airfoil = ax3d.plot_surface(airfoil_x, airfoil_y, airfoil_z, linewidth=0, alpha=0.25)
-                surface = ax3d.plot_surface(x, y, z, alpha=0.5, linewidth=0)
+                airfoil = ax3d.plot_surface(airfoil_x, airfoil_y*-1, airfoil_z, linewidth=0, alpha=0.25)
+                surface = ax3d.plot_surface(x, y*-1, z, alpha=0.5, linewidth=0)
 
                 fig1.tight_layout()
                 # plt.show(block = False)

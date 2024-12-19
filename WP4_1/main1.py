@@ -166,7 +166,7 @@ def main1(load_factor_1: float, load_factor_2: float,):
     Cd_interp_a10 = interpolate.interp1d(df_a10_positive["y_span"], df_a10_positive["Cd"], kind='cubic', fill_value="extrapolate")
 
     # Evaluation points
-    y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 100)
+    y_span_eval = np.linspace(df_a0_positive["y_span"].min(), df_a0_positive["y_span"].max(), 200)
 
     # Load cases
     load_cases = {"Positive Load Factor (n=2.5)": load_factor_1, "Negative Load Factor (n=-1.0)": load_factor_2}

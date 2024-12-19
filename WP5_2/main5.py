@@ -66,7 +66,7 @@ def main5(I_xx, trapezoids, span_and_chord, loads, spanwise_position, max_stress
 
     # Adjust layout and show the plot
     plt.tight_layout()
-    plt.show()
+    # plt.show()
 
     return margin_of_safety_list.tolist(), M_max
 

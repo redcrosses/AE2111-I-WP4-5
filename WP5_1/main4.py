@@ -44,7 +44,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             non_zero_values = np.array(loads[load_case][2])[np.array(loads[load_case][2]) != 0]
             closest_index = np.argmin(np.abs(np.array(spanwise_position) - y))
             T = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][2][closest_index]))]
-        return np.interp(y, spanwise_position, loads[0][2], 0)
+        return T
+    
     def K_s(a, b): #a is the long side, b is the short side! clamped edges
         r = a/b
         if r <= 5:

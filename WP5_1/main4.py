@@ -135,8 +135,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             Ks_rear = K_s(design.a, chord1*design.rearsparlength) #a is long side, b is short side
             Kc = K_c(design.a,design.b)
 
-            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, design.a) #spars
-            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, design.a) #spars
+            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, design.frontsparlength) #spars
+            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, design.rearsparlength) #spars
             column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, design.a) #top panels
             skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness, design.b)
             

@@ -20,8 +20,18 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         
     def V(y):
         return np.interp(y, spanwise_position, loads[0][0], 0)
-    def Mx(y): 
-        return np.interp(y, spanwise_position, loads[0][1], 0)
+    def Mx(y, load_case=0):
+        # Interpolate the moment along the spanwise position for the given load case
+        moment = np.interp(y, spanwise_position, loads[load_case][1], left=0, right=0)
+        
+        # If the moment is exactly 0, replace it with the closest non-zero value
+        if moment == 0:
+            non_zero_values = np.array(loads[load_case][1])[np.array(loads[load_case][1]) != 0]
+            closest_index = np.argmin(np.abs(np.array(spanwise_position) - y))
+            moment = non_zero_values[np.argmin(np.abs(non_zero_values - loads[load_case][1][closest_index]))]
+        
+        # Ensure the moment meets the threshold requirement
+        return moment
     def T(y): 
         return np.interp(y, spanwise_position, loads[0][2], 0)
     def K_s(a, b): #a is the long side, b is the short side! clamped edges
@@ -85,9 +95,10 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
     def Ixx_interp(z):
         return np.interp(z, spanwise_position, I_xx)
     
-    print("\n\033[1m\033[4mBuckling Analysis33[0m")
-    print("\n\033[01mConsidering the trailing edge panels as the most critical ones.\033[0m")
+    print("\n\033[1m\033[4mBuckling Analysis\33[0m")
+    print("\033[01mConsidering the trailing edge panels as the most critical ones.\033[0m")
     with alive_bar(len(design.ribs[:,1])-1, title= "\033[96m {} \033[00m".format("WP5.1:"), bar='smooth', spinner='classic') as bar:
+        design.stresses = np.empty((1,4))
         for i in range(len(design.ribs[:,1])-1):
             rib1 = design.ribs[i,:]
             chord1 = interp_chord(rib1[1])
@@ -107,9 +118,9 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             design.b = (panel1_len+panel2_len)/2 #short side of panel for buckling analysis
             # print(design.a, design.b)
             
-            I = Ixx_interp(rib2[1])
-            M = Mx(design.ribs[i+1,1])
-            y_max = abs(trapezoid[1,1]*design.ribs[i+1,0])
+            I = Ixx_interp(rib1[1])
+            M = Mx(rib1[1])
+            y_max = abs(trapezoid[1,1]*rib1[0])
             norm_stress =  -(M * y_max)/(I)
             
             avg_stress = 0 #shear force divided by (front spar height times thickness, plus rear spar height times thickness)
@@ -138,14 +149,16 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
                 print("\033[32m Pass \033[0m")
             else:
                 print("\033[31m Fail \033[0m")
+            
+            
             bar()
-
+            design.stresses = np.hstack((design.stresses, np.array([[rib1[1], shear_buckling_stress, column_buckling_stress, skin_buckling_stress]])))
             # plt.plot(current_trapezoid[:,0], current_trapezoid[:,1], 'o')
             # plt.plot(current_stringers[:,0], current_stringers[:,1], 'o')
             # plt.ylim(-3,3)
             # plt.gca().set_aspect("equal", adjustable='box')
             # plt.show()
-
+        
 
 if __name__ == "__main__":
     pass

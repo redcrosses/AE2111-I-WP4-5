@@ -136,8 +136,8 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             Ks_rear = K_s(design.a, chord1*design.rearsparlength) #a is long side, b is short side
             Kc = K_c(design.a,design.b)
 
-            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, design.frontsparlength) #spars
-            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, design.rearsparlength) #spars
+            shear_buckling_stress_front = critical_shear_stress(Ks_front, design.vspar_thickness, chord1*design.frontsparlength) #spars
+            shear_buckling_stress_rear = critical_shear_stress(Ks_rear, design.vspar_thickness, chord1*design.rearsparlength) #spars
             column_buckling_stress = column_buckling(design.Ixx_stringer, design.Total_area_stringer, design.a) #top panels
             skin_buckling_stress = sigma_cr(Kc, design.hspar_thickness, design.b)
             
@@ -167,23 +167,32 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
                 print("\033[31m Fail \033[0m")
             
             bar()
-            design.safetyfactors = np.vstack((design.safetyfactors, np.array([[rib1[1], shear_buckling_stress_front/shear_stress_front, np.abs(shear_buckling_stress_rear)/shear_stress_rear, column_buckling_stress/norm_stress, skin_buckling_stress/norm_stress]])))
+            design.safetyfactors = np.vstack((design.safetyfactors, np.array([[rib1[1], shear_buckling_stress_front/shear_stress_front, np.abs(shear_buckling_stress_rear)/np.abs(shear_stress_rear), column_buckling_stress/norm_stress, skin_buckling_stress/norm_stress]])))
 
         #plotting
-        plt.figure(figsize=(10, 6))
-        plt.axhline(1, color="red", linestyle="--", label="Threshold")
-        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 1], label=f'Shear Buckling (front spar)')
-        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 2], label=f'Shear Buckling (rear spar)')
-        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 3], label=f'Column Buckling')
-        plt.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 4], label=f'Skin Buckling')
+        # Create a single figure
+        fig, ax = plt.subplots(figsize=(10, 6))  # Create a single figure and axes
 
-        plt.title("Buckling Margins of Safety")
-        plt.xlabel('Spanwise Position [m]')
-        plt.ylabel('Safety Factor [-]')
-        plt.ylim(0,15)
-        plt.legend()
-        # plt.yscale('log')
-        plt.grid(True)
+        # Add horizontal threshold line
+        ax.axhline(1, color="red", linestyle="--", label="Threshold")
+
+        # Plot all data on the same axes
+        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 3], label='Column Buckling')
+        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 4], label='Skin Buckling')
+        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 1], label='Shear Buckling (front spar)')
+        ax.plot(design.safetyfactors[:, 0][1:], design.safetyfactors[1:, 2], label='Shear Buckling (rear spar)')
+
+        # Set title and labels
+        ax.set_title("Buckling Margins of Safety")
+        ax.set_xlabel('Spanwise Position [m]')
+        ax.set_ylabel('Safety Factor [-]')
+
+        # Set y-axis limits
+        ax.set_ylim(0, 15)
+
+        # Add a legend and grid
+        ax.legend()
+        ax.grid(True)
 
 if __name__ == "__main__":
     pass

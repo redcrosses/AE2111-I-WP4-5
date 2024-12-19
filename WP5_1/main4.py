@@ -68,9 +68,6 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
         tau_right = maxshear()+torsion_shear_stress()
         return tau_right
 
-    left_spar_shear_stress()
-    right_spar_shear_stress()
-
     # Column buckling critical stress
     def column_buckling(MOI, A, L):
         K = 4

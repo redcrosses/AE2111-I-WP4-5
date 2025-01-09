@@ -31,5 +31,5 @@ def centroid_of_quadrilateral(numpy_list):
     return centroid_x, centroid_y
 
 if __name__ == "__main__":
-    coords: list = [(0,1),(0,0),(1,0),(1,1)]
+    coords = np.array([[0, 1], [0, 0], [1, 0], [1, 1]])
     print(centroid_of_quadrilateral(coords))

@@ -1,14 +1,7 @@
 import numpy as np
-def centroid_of_quadrilateral(points):
-    """
-    Calculate the centroid of a 2D shape defined by four coordinate points in counterclockwise order.
-
-    :param points: List of tuples [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
-    :return: Tuple representing the centroid (x, y)
-    """
-    if len(points) != 4:
-        raise ValueError("The input must contain exactly 4 points.")
-
+def centroid_of_quadrilateral(numpy_list):
+    points = [tuple(row) for row in numpy_list]
+   
     # Ensure the polygon is closed by appending the first point to the end
     points.append(points[0])
 

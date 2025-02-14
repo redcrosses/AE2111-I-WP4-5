@@ -15,3 +15,7 @@ The code was run using Python version 3.10 or better, with the following prerequ
 The code takes a design inputted by the user in code and evaluates its performance under different loadings in the flight envelope. This includes a bending displacement requirement, twist requirement, buckling performance and damage tolerance in tension.
 <h1>Usage</h1>
 The designs are inputted in the file ACTUALLY_MAIN.py. Then you run this file to run the entire procedure. The requirements are hard-coded into the program so sorry not sorry :)
+
+![logo](ex1.png)
+![logo](ex2.png)
+![logo](ex3.png)

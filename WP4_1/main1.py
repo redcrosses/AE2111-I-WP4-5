@@ -173,6 +173,8 @@ def main1(load_factor_1: float, load_factor_2: float,):
 
     # Dictionary to store results
     results = {}
+    
+    weights = []
 
     # Iterate through load cases
     with alive_bar(6, title= "\033[96m {} \033[00m".format("WP4.1:"), bar='smooth', spinner='classic') as bar:
@@ -196,7 +198,12 @@ def main1(load_factor_1: float, load_factor_2: float,):
 
             # Compute shear force, bending moment, and torque distributions
             print("Shear force distribution...")
-            shear_force_distribution = compute_shear_force(y_span_eval, N_prime, point_load=2858 * 9.80665, point_load_position=3.9)
+            if load_factor<0:
+                shear_force_distribution = compute_shear_force(y_span_eval, N_prime, point_load=2858 * 9.80665, point_load_position=3.9) + (40000-y_span_eval/14*35000)
+                weight = (32900-y_span_eval/14*24675)
+                weights = weights.append(weight)
+            else:
+                shear_force_distribution = compute_shear_force(y_span_eval, N_prime, point_load=2858 * 9.80665, point_load_position=3.9)                
             bar()
             print("Bending moment distribution...")
             bending_moment_distribution = compute_bending_moment(y_span_eval, shear_force_distribution)
@@ -211,12 +218,13 @@ def main1(load_factor_1: float, load_factor_2: float,):
             results[label] = {
                 "shear_force": shear_force_distribution,
                 "bending_moment": bending_moment_distribution,
-                "torque": torque_distribution
+                "torque": torque_distribution,
             }
+            
 
     # Create a single figure for all 6 plots
     fig, axs = plt.subplots(3, 2, figsize=(15, 18))
-
+    
     # Loop through results and plot on separate axes
     for i, (label, res) in enumerate(results.items()):
         # Shear Force
@@ -249,6 +257,11 @@ def main1(load_factor_1: float, load_factor_2: float,):
     # Adjust layout
     fig.tight_layout()
     # plt.show(block = False)
+    fig2, ax2 = plt.subplots(1,1, figsize=(10, 15))
+    ax2.set_title("Assumed Weight Distribution")
+    ax2.set_xlabel("Spanwise position (m)")
+    ax2.set_ylabel("Weight (N)")
+    ax2.plot(y_span_eval, weight,"bo-")
     
     results_pos = [
         list(results["Positive Load Factor (n=2.5)"]["shear_force"]),

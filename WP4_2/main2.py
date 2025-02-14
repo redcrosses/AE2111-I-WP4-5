@@ -120,6 +120,7 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
             self.rearsparlength = rearsparlength
             self.hspar_thickness = hspar_thickness
             self.vspar_thickness = vspar_thickness
+            
             #loadings found from diagrams
             def stringer_sizing(length_1,length_2, thickness_1, thickness_2):
                 # t1 and l1 are the dimensions of the rectangle parallel to the wingbox and t2 and l2 are the dimensions for the rectangle,
@@ -132,7 +133,6 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
                 x_centroid_stringer = (Area_parallel*length_1/2)/Total_area_stringer
                 Ixx_stringer =  Area_parallel * y_centroid_stringer ** 2 + (1/12) * length_2 ** 3 * thickness_2 + Area_perpendicular * (length_2-y_centroid_stringer) ** 2
                 Iyy_stringer =  Area_perpendicular * x_centroid_stringer ** 2 + (1/12) * length_1 ** 3 * thickness_1 + Area_parallel * (length_1-x_centroid_stringer) ** 2
-
                 return Ixx_stringer, Iyy_stringer, Total_area_stringer
             
             def ribsget(rib_spacing: float):
@@ -175,6 +175,8 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
                     self.width = box.width
                     self.trapezoid = box.init_trapezoid
                     self.stringers = box.stringers
+                    self.centroid: float = tuple(centroid_of_quadrilateral(self.trapezoid))
+
                 
                     for chord_at_span in self.chords_along_span:
                         box: object = WingBox(frontsparlength, rearsparlength, chord_at_span[0], hspar_thickness, vspar_thickness)
@@ -285,6 +287,7 @@ def main2(designnumber: int, loads: tuple, span_pos: list, n_tuple: tuple, front
                 ax2d.set_aspect("equal")
                 ax2d.plot(airfoil_x*self.rootchord, airfoil_y*self.rootchord)
                 ax2d.plot(trapezoids_sized[:5,0], trapezoids_sized[:5,1])
+                ax2d.plot(self.centroid[0]*self.rootchord, self.centroid[1]*self.rootchord,"go")
                 ax2d.plot(self.stringers[:,0]*self.rootchord, self.stringers[:,1]*self.rootchord,"ro")
 
                 for rib in self.ribs:

@@ -102,6 +102,9 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
     
     def Ixx_interp(z):
         return np.interp(z, spanwise_position, I_xx)
+
+    stresspos = []
+    stressneg = []
     
     print("\n\033[1m\033[4mBuckling Analysis\33[0m")
     print("\033[01mConsidering the trailing edge panels as the most critical ones. All stresses are magnitudes.\033[0m")
@@ -128,10 +131,18 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             
             I = Ixx_interp(rib1[1])
             M = Mx(rib1[1])
+            M_neg = Mx(rib1[1],1)
+            
             V = Vz(rib1[1])
             y_max = abs(trapezoid[1,1]*rib1[0])
+            y_min = abs(trapezoid[3,1]*rib1[0])
             norm_stress =  -(M * y_max)/(I)
+            norm_stress_min = -(M_neg * y_min)/I
             
+            stresspos.append(norm_stress)
+            stressneg.append(norm_stress_min)
+            
+            print("{:e},{:e},{:e}".format(M_neg, norm_stress, norm_stress_min))
             shear_stress_front = left_spar_shear_stress(chord1*design.frontsparlength, chord1*design.rearsparlength, chord1*design.width, rib1[1])
             # maxshear(chord1*design.frontsparlength, chord1*design.rearsparlength, V) #assumed that only the spar webs carry any shear flow due to the shear force
             shear_stress_rear = right_spar_shear_stress(chord1*design.frontsparlength, chord1*design.rearsparlength, chord1*design.width, rib1[1])
@@ -174,6 +185,14 @@ def main4(I_xx, trapezoid, stringers_pos, chord_and_span, loads, spanwise_positi
             design.safetyfactors = np.vstack((design.safetyfactors, np.array([[rib1[1], shear_buckling_stress_front/shear_stress_front, np.abs(shear_buckling_stress_rear)/np.abs(shear_stress_rear), column_buckling_stress/norm_stress, skin_buckling_stress/norm_stress]])))
 
         #plotting
+        fig2,ax2 = plt.subplots(figsize=(10,6))
+        ax2.set_title("Max. stresses on the top and bottom sides along the span")
+        ax2.set_xlabel("Spanwise position (m)")
+        ax2.set_ylabel("Stress (Pa)")
+        ax2.plot(design.ribs[1:,1], stresspos, label='Positive Stress')
+        ax2.plot(design.ribs[1:,1], np.abs(stressneg), label='Negative Stress')
+        ax2.legend()
+        
         fig, ax = plt.subplots(figsize=(10, 6))  # Create a single figure and axes
         sigma = 0.1
         x = design.safetyfactors[:, 0]
